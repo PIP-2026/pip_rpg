@@ -10,7 +10,7 @@ using System.Collections;
 using System.Diagnostics;
 /// <remarks>
 ///  <para>
-///   Author: name / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
+///   Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
 ///  </para>
 ///   <para>
 ///   Issue: <a href="https://github.com/PIP-2026/pip_rpg/issues/22">link to issue</a>
@@ -94,7 +94,7 @@ public class BasicAPIClass : MonoBehaviour
 //      request.SetRequestHeader("X-Unity-Client", Application.version);
 //      var op = request.SendWebRequest();
 //      while(!op.isDone) await Task.Yield();
-//      // Call Response Server mehtod to process API requests.
+//      // Call Response Server method to process API requests.
 //    }
 //
 //  }
