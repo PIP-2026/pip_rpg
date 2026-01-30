@@ -90,7 +90,7 @@ public class OurEventSystem : MonoBehaviour
   /// <summary>
   /// Naming is ambiguous as we have yet to decide if we want to validate the Transition on button press alone or protect this with an API request and extend on the API class
   /// </summary>
-  public static void RequestGameStateChange(GameState next)
+  public static void ChangeGameState(GameState next)
   {
     if (next == CurrentState) return ;
     GameState prev = CurrentState ;
@@ -115,7 +115,7 @@ public class OurEventSystem : MonoBehaviour
   }
   /// <summary>
   /// I added some suggestions.
-  /// If we choose to validate state transitions with an API request, this allows for the modular approach to control it driven by these and seperating inherent game only logic from the Statistics tracking
+  /// This allows for the modular approach to control game progression by these and seperating inherent game only logic from the Statistics tracking
   /// </summary>
   [Serializable]
   private class GameEvents
@@ -134,7 +134,7 @@ public class OurEventSystem : MonoBehaviour
   private class EventSystemConfig 
   {
     [SerializeField] private string helloWorld = "hello world" ;
-    // Extend here
+    // Extend here, whenever you feel like it and validate the reason for the new field to exist and how to implement it
   }
 /// <summary>
 /// The GameState is an overarching tool to track statistics and drive a few events in game. other than that we can use the UIManager to control these.
