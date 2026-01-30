@@ -199,6 +199,121 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
 
 
 /*************************/
+/******* PUT/PATCH *******/
+/*************************/
+
+import { responseBodyPUT } from './format/putf.js';
+
+app.put( "/statistics/session", asyncMiddleware( async (request,response,next) => {
+  /******/
+  //let responseBody = responseBodyPUT ;
+  //const sql = "UPDATE session SET ? = ? WHERE id = :id" ;
+  //let sql_params = [] ;
+  /******/
+
+
+  /** Add Context */
+  //responseBody.context = sessionContext ;
+  /** End */
+  
+
+  /** Maintain Custody Chain */
+  //if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  //  responseBodyGET.custody_chain = request.body.custody_chain ;
+  //}
+  //responseBodyGET.custody_chain.push( CUSTODIAN ) ;
+  /** End */
+  
+
+  /** Validate Data */
+  //if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
+    /**
+     * TODO: ensure that the fields contain valid datetime data
+     */
+  //  sql_params.push( request.body.started_at ) ;
+  //  sql_params.push( request.body.ended_at ) ;
+  //} else {
+  //  responseBody.ok = false ;
+  //  responseBody.error = `Invalid parameter.` ;
+  //  response.status(400) ;
+  //}
+  /** End */
+
+
+  /** Query SQL Server */
+  //let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  /**
+    * TODO: error handling
+    */
+  //responseBody.insert_id = okPacket.insertId ;
+  /** End */
+  
+  response.json( /* responseBody */ ) ;
+} ) ) ;
+
+
+/*************************/
+/******** DELETE *********/
+/*************************/
+
+import { responseBodyDELETE } from './format/deletef.js';
+
+app.delete( "/statistics/session", asyncMiddleware( async (request,response,next) => {
+  /******/
+  let responseBody = responseBodyDELETE ;
+  const sql = "DELETE FROM session WHERE id = :id" ;
+  let sql_params = [] ;
+  let deletions = {
+    "/statistics/session": 0,
+    "/statistics/input": 0,
+    "/statistics/interaction/npc": 0,
+    "/statistics/time": 0,
+    "_comment": "location and number of deletions"
+  } ;
+  /******/
+
+
+  /** Add Context */
+  responseBody.context = sessionContext ;
+  /** End */
+  
+
+  /** Maintain Custody Chain */
+  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+    responseBodyGET.custody_chain = request.body.custody_chain ;
+  }
+  responseBodyGET.custody_chain.push( CUSTODIAN ) ;
+  /** End */
+  
+
+  /** Validate Data */
+  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
+    /**
+     * TODO: ensure that the fields contain valid datetime data
+     */
+    sql_params.push( request.body.started_at ) ;
+    sql_params.push( request.body.ended_at ) ;
+  } else {
+    responseBody.ok = false ;
+    responseBody.error = `Invalid parameter.` ;
+    response.status(400) ;
+  }
+  /** End */
+
+
+  /** Query SQL Server */
+  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  /**
+    * TODO: error handling
+    */
+  responseBody.insert_id = okPacket.insertId ;
+  /** End */
+  
+  response.json( responseBody ) ;
+} ) ) ;
+
+
+/*************************/
 /********* START *********/
 /*************************/
 
