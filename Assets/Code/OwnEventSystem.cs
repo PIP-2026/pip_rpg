@@ -77,13 +77,7 @@ public class OurEventSystem : MonoBehaviour
     // generally validate that there is only ever one OurEventSystem instance
     // stop everything and throw an exception if not
     if( _instance != null )
-      throw new Exception("Program attempted to create an instance of EventSystem, but one already existed.") ;
-      // Destroy the new instance of the object in case one of OurEventSystem is already set
-      if(_instance != this)
-        {
-          Destroy(gameObject) ;
-          return ;
-        }
+      throw new Exception("Program attempted to create an instance of EventSystem, but one already existed.") ; 
     
     _instance = this ;
   }
