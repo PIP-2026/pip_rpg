@@ -1,5 +1,7 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
+using UnityEngine.Events;
 /// <remarks>
 ///   <para>
 ///     Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
@@ -31,16 +33,12 @@ public class UIManager : MonoBehaviour
   #endregion
   #region Unity Editor
   // The list holds the information of available panels to toggle, depending on Events and informing the Statistics tracker of it
-//  [SerializeField] private List<GameObject> _panels ;
+  [SerializeField] private List<GameObject> _panels ;
 
   #endregion
   #region MonoBehaviour
-// Update is called once per frame
-  void Update()
-  {
-
-  }
+  // To track the statistics we need, track the navigation
+  #endregion
+  #region Serializable
   #endregion
 }
-#region Serializable
-#endregion
