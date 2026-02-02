@@ -30,7 +30,7 @@ using System.Diagnostics;
 public class BasicAPIClass : MonoBehaviour
 {
 //SessionRowData
-  [GeneratePropertyBag, Serializable]
+  [Serializable]
   class SessionRowData
   {
     public int id ;
@@ -39,26 +39,26 @@ public class BasicAPIClass : MonoBehaviour
     public string recorded_at ;
   }
 // ContextKey
-  [GeneratePropertyBag, Serializable]
+  [Serializable]
   class ContextKey
   {
     public string of ;
     public string[] forT ;
   }
 // ResponseContext
-  [GeneratePropertyBag, Serializable]
+  [Serializable]
   class ResponseContext <TKey>
   {
     public TKey keys ;
   }
 // SessionContextKeys
-  [GeneratePropertyBag, Serializable]
+  [Serializable]
   class SessionContextKeys
   {
     public ContextKey id ;
   }
 // GetSessionResponse
-  [GeneratePropertyBag, Serializable]
+  [Serializable]
   class GetSessionResponse
   {
     public bool ok ;
