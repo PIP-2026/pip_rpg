@@ -7,7 +7,8 @@ using Unity.Serialization.Json; // Assuming we will need it. i put this here
 using Unity.Properties;
 using Unity.Serialization;
 using System.Collections;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
 /// <remarks>
 ///  <para>
 ///   Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
@@ -26,77 +27,90 @@ using System.Diagnostics;
 ///   The class should be capable of deserializing making API calls to the the Basic Response Server and deserialize the dummy data produced.
 ///   The class should recognize HTTP error codes and handle them appropriately. In this case this means logging them.
 /// </summary>
-
-public class BasicAPIClass : MonoBehaviour
+public partial class BasicAPIClass : MonoBehaviour
 {
-//SessionRowData
-  [Serializable]
-  class SessionRowData
+#region Unity Editor
+  [SerializeField] private string apiHost = "127.0.0.1" ;
+  [SerializeField] private string apiPort = "4141" ;
+#endregion
+
+
+#region Api Endpoints
+ private const string API_PATH_SESSION = "/statistics/session" ;
+#endregion
+
+
+#region Cache
+  private Dictionary<int,SessionRowData> CachedSessionData { get ; } = new () ;
+#endregion
+
+
+  public void TestGetSession()
   {
-    public int id ;
-    public string started_at ;  // JSON can not read DateTime
-    public string ended_at ;
-    public string recorded_at ;
+    StartCoroutine( GetSession( -1, (res) => {
+      int entriesAdded = 0 ;
+      int entriesUpdated = 0 ;
+      foreach( SessionRowData data in res.data )
+      {
+        if( CachedSessionData.TryGetValue( data.id, out SessionRowData cachedData ) )
+        {
+          if( true /* && data.recorded_at > cachedData.recorded_at */ )
+          {
+            // replace entry with updated data from server
+            CachedSessionData[data.id] = data ;
+            entriesUpdated++ ;
+          }
+        }
+        else
+        {
+          // create a new entry using server data
+          CachedSessionData.Add( data.id, data ) ;
+          entriesAdded++;
+        }
+      }
+      Debug.Log( $"Request successful! Entries added: {entriesAdded} ; Entries updated: {entriesUpdated} ; Total entries: {CachedSessionData.Count}" ) ;
+    } ) ) ;
   }
-// ContextKey
-  [Serializable]
-  class ContextKey
+  IEnumerator GetRequest( string uri, Action<string> onResult )
   {
-    public string of ;
-    public string[] forT ;
-  }
-// ResponseContext
-  [Serializable]
-  class ResponseContext <TKey>
-  {
-    public TKey keys ;
-  }
-// SessionContextKeys
-  [Serializable]
-  class SessionContextKeys
-  {
-    public ContextKey id ;
-  }
-// GetSessionResponse
-  [Serializable]
-  class GetSessionResponse
-  {
-    public bool ok ;
-    public bool cacheable ;
-    public string[] custody_chain ;
-    public SessionRowData[] rows;
-    public ResponseContext<SessionContextKeys> context;
-    public string _meta ;
-    public string error ;
+    UnityWebRequest webRequest = UnityWebRequest.Get( uri ) ;
+#if UNITY_EDITOR
+    Debug.Log( $"Dispatching a GET request to \"{uri}\"." ) ;
+#endif
+    yield return webRequest.SendWebRequest() ;
+
+    if( webRequest.error != null )
+    {
+#if UNITY_EDITOR
+      Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
+#endif
+      yield break ;
+    } else {
+#if UNITY_EDITOR
+      Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
+#endif
+    }
+
+    onResult?.Invoke( webRequest.downloadHandler.text ) ;
   }
 
-// Dormant for the reason of waiting
-// public static class SessionReader 
-// {
-//   public static DateTime GetDate(string rawDate) => DateTime.Parse(rawDate) ;
-//   public static void LogSummary(GetSessionResponse response)
-//   {
-//     if (response.rows == null) return ;
-//     foreach(var row in response.rows)
-//     {
-//       Debug.Log($"[Session {row.id}] Started: {GetDate(row.started_at):g}") ;
-//     }
-//   }
-// }
+  IEnumerator GetSession( int id, Action<GetSessionResponse> onResult )
+  {
+    string uri = $"http://{apiHost}:{apiPort}{API_PATH_SESSION}{(id < 0 ? string.Empty : $"/{id}")}";
 
-// Dormant for the reason of waiting
-//  public async Task GetSessions(Action<GetSessionResponse> onResult)
-//  {
-//    // Fictive endpoint, change this to actual endpoint after Issue #18
-//    string endpoint = "replace me with the actual endpoint";
-//    using (UnityWebRequest request = UnityWebRequest.Get(EndPoint))
-//    {
-//      request.SetRequestHeader("X-Unity-Client", Application.version);
-//      var op = request.SendWebRequest();
-//      while(!op.isDone) await Task.Yield();
-//      // Call Response Server method to process API requests.
-//    }
-//
-//  }
-  
+    GetSessionResponse parsedResponse = null ;
+
+    yield return StartCoroutine( GetRequest( uri, (text) => { parsedResponse = JsonUtility.FromJson<GetSessionResponse>(text) ; } ) ) ;
+
+    if (parsedResponse == null || !parsedResponse.ok)
+    {
+#if UNITY_EDITOR
+      Debug.LogError($"GetSession error: {(parsedResponse != null ? parsedResponse.error : "Invalid JSON")}");
+#endif
+      yield break ;
+    }
+
+    onResult?.Invoke( parsedResponse ) ;
+  }
+
 }
