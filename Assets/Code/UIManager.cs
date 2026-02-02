@@ -31,7 +31,7 @@ public class UIManager : MonoBehaviour
   #endregion
   #region Unity Editor
   // The list holds the information of available panels to toggle, depending on Events and informing the Statistics tracker of it
-  [SerializeField] private List<GameObject> _panels ;
+//  [SerializeField] private List<GameObject> _panels ;
 
   #endregion
   #region MonoBehaviour

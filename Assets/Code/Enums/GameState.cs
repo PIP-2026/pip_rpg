@@ -2,7 +2,6 @@
 /// The GameState is an overarching tool to track statistics and drive a few events in game. other than that we can use the UIManager to control these.
 /// If we just don't trust the user we can write it as a request to the API and check if the state change is secure enough.
 /// </summary>
-using System.Collections.Generic;
 public enum GameState
 {
   None = 0,  // Default
