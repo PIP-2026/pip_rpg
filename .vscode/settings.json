@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "pip_rpg.slnx"
+    "dotnet.defaultSolution": "pip_rpg.slnx",
+    "editor.tabSize": 2
 }
