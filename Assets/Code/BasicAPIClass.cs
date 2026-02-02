@@ -45,32 +45,6 @@ public partial class BasicAPIClass : MonoBehaviour
 #endregion
 
 
-  public void TestGetSession()
-  {
-    StartCoroutine( GetSession( -1, (res) => {
-      int entriesAdded = 0 ;
-      int entriesUpdated = 0 ;
-      foreach( SessionRowData data in res.data )
-      {
-        if( CachedSessionData.TryGetValue( data.id, out SessionRowData cachedData ) )
-        {
-          if( true /* && data.recorded_at > cachedData.recorded_at */ )
-          {
-            // replace entry with updated data from server
-            CachedSessionData[data.id] = data ;
-            entriesUpdated++ ;
-          }
-        }
-        else
-        {
-          // create a new entry using server data
-          CachedSessionData.Add( data.id, data ) ;
-          entriesAdded++;
-        }
-      }
-      Debug.Log( $"Request successful! Entries added: {entriesAdded} ; Entries updated: {entriesUpdated} ; Total entries: {CachedSessionData.Count}" ) ;
-    } ) ) ;
-  }
   IEnumerator GetRequest( string uri, Action<string> onResult )
   {
     UnityWebRequest webRequest = UnityWebRequest.Get( uri ) ;
@@ -94,23 +68,12 @@ public partial class BasicAPIClass : MonoBehaviour
     onResult?.Invoke( webRequest.downloadHandler.text ) ;
   }
 
-  IEnumerator GetSession( int id, Action<GetSessionResponse> onResult )
+
+#region Response Parent Class
+  class RequestResponse
   {
-    string uri = $"http://{apiHost}:{apiPort}{API_PATH_SESSION}{(id < 0 ? string.Empty : $"/{id}")}";
-
-    GetSessionResponse parsedResponse = null ;
-
-    yield return StartCoroutine( GetRequest( uri, (text) => { parsedResponse = JsonUtility.FromJson<GetSessionResponse>(text) ; } ) ) ;
-
-    if (parsedResponse == null || !parsedResponse.ok)
-    {
-#if UNITY_EDITOR
-      Debug.LogError($"GetSession error: {(parsedResponse != null ? parsedResponse.error : "Invalid JSON")}");
-#endif
-      yield break ;
-    }
-
-    onResult?.Invoke( parsedResponse ) ;
+    public bool ok ;
+    public string error ;
   }
-
+#endregion
 }
