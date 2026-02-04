@@ -7,5 +7,6 @@ public enum PanelType
   None,
   Dialogue,
   Inventory,
-  Menu
+  Menu,
+  HUD
 }

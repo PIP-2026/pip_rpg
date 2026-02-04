@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Events;
+using System.Collections;
 /// <remarks>
 ///   <para>
 ///     Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
@@ -26,7 +26,7 @@ public class UIManager : MonoBehaviour
   {
     if( _instance != null )
     {
-      throw new Exception("Program tried to implement a nw instance of UIManager, but one already existed") ;
+      throw new Exception( "Program tried to implement a nw instance of UIManager, but one already existed" ) ;
     }
     _instance = this;
   }
@@ -34,11 +34,54 @@ public class UIManager : MonoBehaviour
   #region Unity Editor
   // The list holds the information of available panels to toggle, depending on Events and informing the Statistics tracker of it
   [SerializeField] private List<GameObject> _panels ;
-
+  [SerializeField] private GameObject _main_PausePanel ;
+  [SerializeField] private GameObject _loadingPanel ;
+  [SerializeField] private float _loadingScreenTime = 5f ;
   #endregion
   #region MonoBehaviour
   // To track the statistics we need, track the navigation
+  public void HandleGameStateChange( GameState prev , GameState next )
+  {
+    if ( prev == next ) return ;
+    foreach( var p in _panels )
+    {
+      PanelType panelType = p.GetComponent<PanelObjectBase>().Type;
+      switch ( next)
+      {
+        case GameState.Exploration:
+          // Toggle Panels accordingly
+          if( panelType == PanelType.HUD ) gameObject.SetActive( true ) ;
+          else gameObject.SetActive( false ) ;
+          break ;
+        case GameState.Dialogue:
+          if( panelType == PanelType.Dialogue) gameObject.SetActive( true ) ;   // Why you not working?
+          else gameObject.SetActive( false ) ;
+          break ;
+        case GameState.Menu:
+          if( panelType != PanelType.Menu) gameObject.SetActive( false ) ;
+          if( _main_PausePanel.activeSelf == false ) _main_PausePanel.SetActive( true ) ;
+          break ;
+        case GameState.Loading:
+          StartCoroutine( ShowLoadingScreen() ) ;
+          break ;
+      }
+    }
+  }
+
+  private IEnumerator ShowLoadingScreen()
+  {
+    _loadingPanel.SetActive( true ) ;
+    yield return new WaitForSecondsRealtime( _loadingScreenTime ) ;
+    _loadingPanel.SetActive( false ) ;
+  }
   #endregion
   #region Serializable
+
   #endregion
+  public void TestPause() {
+     OurEventSystem.GameStateChanged.Invoke( GameState.Exploration , GameState.Menu ); }  // WORKS
+     // TODO Put this to the GameManager that will handle it all
+
+  public void TestDialogue(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Dialogue);} // Does NOT work yet
+  public void TestLoading(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Loading);} // WORKS
 }

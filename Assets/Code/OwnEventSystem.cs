@@ -1,7 +1,6 @@
 using UnityEngine;
 using System;
 using UnityEngine.Events;
-using System.Collections.Generic;
 /// <remarks>
 ///   <para>
 ///     Author: Maria Lindling / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
@@ -22,7 +21,6 @@ public class OurEventSystem : MonoBehaviour
 {
   #region Singleton
     private static OurEventSystem _instance ;
-    public static GameState CurrentState {get; private set;}
   #endregion
   
   
@@ -47,10 +45,10 @@ public class OurEventSystem : MonoBehaviour
     /// </summary>
     public static UnityEvent<GameState, GameState> MetaNavigation => _instance.statisticsTrackingEvents.metaNavigation ;
     /// NOTE: instead of MetaNavigationAction it might actually be more elegant to instead make the parameters the (prev,next) game state, such as "Exploring", "InMenu" and "InDialogue", etc.
-    public static UnityEvent DialogueSkipped => _instance.statisticsTrackingEvents.dialogueLineSkip ;
-    public static UnityEvent InteractionInitiated => _instance.statisticsTrackingEvents.anyInteract ;
-    public static UnityEvent AnyButtonPressed => _instance.statisticsTrackingEvents.anyButtonPress ;
-    public static UnityEvent<int> PlayerMoved => _instance.statisticsTrackingEvents.tilesMoved ;
+    public static UnityEvent DialogueSkipped => _instance.statisticsTrackingEvents.dialogueLineSkip ; // Look into configs and wire this via inspector
+    public static UnityEvent InteractionInitiated => _instance.statisticsTrackingEvents.anyInteract ; // Look into configs and wire this via inspector
+    public static UnityEvent AnyButtonPressed => _instance.statisticsTrackingEvents.anyButtonPress ;  // Listeners wired via code
+    public static UnityEvent<int> PlayerMoved => _instance.statisticsTrackingEvents.tilesMoved ;      // Listeners wired via code
   #endregion
   
 
@@ -67,7 +65,7 @@ public class OurEventSystem : MonoBehaviour
   /// <summary>
   ///   Currently 
   /// </summary>
-  public static UnityEvent<GameState, GameState> GameStateChanged => _instance.gameEvents.gameStateChange ;
+  public static UnityEvent<GameState, GameState> GameStateChanged => _instance.gameEvents.gameStateChange ;   // Wire this via code
   #endregion
   
 
@@ -80,40 +78,29 @@ public class OurEventSystem : MonoBehaviour
       throw new Exception("Program attempted to create an instance of EventSystem, but one already existed.") ;
     _instance = this ;
   }
-  /// <summary>
-  /// Naming is ambiguous as we have yet to decide if we want to validate the Transition on button press alone or protect this with an API request and extend on the API class
-  /// </summary>
-  public static void ChangeGameState(GameState next)
-  {
-    if (next == CurrentState) return ;
-    GameState prev = CurrentState ;
-    CurrentState = next ;
-    _instance.gameEvents.gameStateChange.Invoke(prev, next) ;
-    _instance.statisticsTrackingEvents.metaNavigation.Invoke(prev, next) ;
-
-    Debug.Log($"[EventSystem] State changed from {prev} to {next}.") ;
-  }
   #endregion
   
   
   #region Serializables
+  // TODO: Probably have to expand all Events with the identifier of the client
   [Serializable]
   private class StatisticsTrackingEvents 
   {
-    [SerializeField] public readonly UnityEvent<GameState, GameState> metaNavigation ; // prev, next
-    [SerializeField] public readonly UnityEvent/*<DialogueLineObject>*/ dialogueLineSkip ;
-    [SerializeField] public readonly UnityEvent anyButtonPress ;
-    [SerializeField] public readonly UnityEvent/*<Actor,IInteractable>*/ anyInteract ;  // to track all player initiated Interactions, can pass InteractionTypes if we want to differentiate between them for more stats
-    [SerializeField] public readonly UnityEvent <int> tilesMoved;  // to track player movement
+    [SerializeField] public UnityEvent<GameState, GameState> metaNavigation ; // prev, next
+    [SerializeField] public UnityEvent/*<DialogueLineObject>*/ dialogueLineSkip ;
+    [SerializeField] public UnityEvent anyButtonPress ;
+    [SerializeField] public UnityEvent/*<Actor,IInteractable>*/ anyInteract ;  // to track all player initiated Interactions, can pass InteractionTypes if we want to differentiate between them for more stats
+    [SerializeField] public UnityEvent <int> tilesMoved;  // to track player movement
   }
   /// <summary>
   /// I added some suggestions.
-  /// This allows for the modular approach to control game progression by these and seperating inherent game only logic from the Statistics tracking
+  /// This allows for the modular approach to control game progression by these and separating inherent game only logic from the Statistics tracking
   /// </summary>
+  // TODO: Probably have to expand all Events with the identifier of the client
   [Serializable]
   private class GameEvents
   {
-    [SerializeField] public readonly UnityEvent<GameState, GameState> gameStateChange ;
+    [SerializeField] public UnityEvent<GameState, GameState> gameStateChange ;
     // [SerializeField] public readonly UnityEvent gameInitiated;
     // [SerializeField] public readonly UnityEvent questInitiated;
     // [SerializeField] public readonly UnityEvent questFinished;
@@ -122,7 +109,9 @@ public class OurEventSystem : MonoBehaviour
     // [SerializeField] public readonly UnityEvent gameFinished;
 
   }
-
+/// <summary>
+/// Publicly exposed fields for inspector assignments to the Events. People who like assigning their Listeners in the Inspector can do that.
+/// </summary>
   [Serializable]
   private class EventSystemConfig 
   {

@@ -9,7 +9,7 @@ using UnityEngine.UI;
 ///   </para>
 ///   <para>
 ///   Attach this script to the UIPanels you would like to track.
-///   Find them in the Foloder ../Code/UI/
+///   Find them in the Folder ../Code/UI/
 ///   </para>
 /// </remarks>
 /// <summary>
@@ -21,6 +21,7 @@ public class PanelObjectBase : MonoBehaviour
 {
   #region UnityEditor
   [SerializeField] private PanelType panelType;   // Assign this in the Inspector
+  public PanelType Type => panelType ;
   #endregion
   #region Setup
   #endregion
@@ -32,10 +33,10 @@ public class PanelObjectBase : MonoBehaviour
     foreach( Button btn in buttons)
     {
       Button cbtn = btn;
-      cbtn.onClick.AddListener( () => OnButtonPress(cbtn) ) ;
+      cbtn.onClick.AddListener( () => OnButtonPress() ) ;
     }
   }
-  private void OnButtonPress( Button btn )
+  public void OnButtonPress()
   {
     OurEventSystem.AnyButtonPressed.Invoke();
   }
