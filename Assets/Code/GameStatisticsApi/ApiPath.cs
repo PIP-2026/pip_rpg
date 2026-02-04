@@ -220,7 +220,7 @@ namespace GameStatisticsApi
     {
       UnityWebRequest webRequest = UnityWebRequest.Get( uri ) ;
 #if UNITY_EDITOR
-      Debug.Log( $"Dispatching a GET request to \"{uri}\"." ) ;
+      Debug.Log( $"Dispatching a POST request to \"{uri}\"." ) ;
 #endif
       yield return webRequest.SendWebRequest() ;
 
