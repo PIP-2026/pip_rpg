@@ -65,7 +65,7 @@ namespace GameStatisticsApi
     private void Awake()
     {
       if( _instance != null )
-        throw new Exception("Program attempted to create an instance of EventSystem, but one already existed.") ;
+        throw new Exception("Program attempted to create an instance of RestApi, but one already existed.") ;
       _instance = this ;
     }
 #endregion
