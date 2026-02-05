@@ -20,8 +20,12 @@ using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
-  #region Singleton
+#region Singleton
   private static UIManager _instance ;
+#endregion
+
+
+#region MonoBehaviour
   private void Awake()
   {
     if( _instance != null )
@@ -30,15 +34,20 @@ public class UIManager : MonoBehaviour
     }
     _instance = this;
   }
-  #endregion
-  #region Unity Editor
+#endregion
+
+
+#region Unity Editor
   // The list holds the information of available panels to toggle, depending on Events and informing the Statistics tracker of it
   [SerializeField] private List<GameObject> _panels ;
   [SerializeField] private GameObject _main_PausePanel ;
   [SerializeField] private GameObject _loadingPanel ;
   [SerializeField] private float _loadingScreenTime = 5f ;
-  #endregion
-  #region MonoBehaviour
+  [SerializeField] private DebugMessages debugMessages ;
+#endregion
+
+
+#region Events
   // To track the statistics we need, track the navigation
   public void HandleGameStateChange( GameState prev , GameState next )
   {
@@ -68,23 +77,56 @@ public class UIManager : MonoBehaviour
       }
     }
   }
+#endregion
 
+
+#region Coroutines
   private IEnumerator ShowLoadingScreen()
   {
     _loadingPanel.SetActive( true ) ;
     yield return new WaitForSecondsRealtime( _loadingScreenTime ) ;
     _loadingPanel.SetActive( false ) ;
   }
-  #endregion
-  #region Serializable
+#endregion
 
-  #endregion
-  public void TestPause() { OurEventSystem.GameStateChanged.Invoke( GameState.Exploration , GameState.Menu ); }  // WORKS
+
+#region Serializable
+
+#endregion
+
+
+#region Tests
+  public void TestPause() {
+    debugMessages?.testPause.TryInvoke() ;
+    OurEventSystem.GameStateChanged.Invoke( GameState.Exploration , GameState.Menu );
+  }  // WORKS
      // TODO Put this to the GameManager that will handle it all
 
-  public void TestDialogue(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Dialogue);} // Does NOT work yet
-  public void TestLoading(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Loading);} // WORKS
+  public void TestDialogue(){
+    debugMessages?.testDialogue.TryInvoke() ;
+    OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Dialogue);
+  } // Does NOT work yet
+  public void TestLoading(){
+    debugMessages?.testLoading.TryInvoke() ;
+    OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Loading);
+  } // WORKS
   // TODO Write that down
 
-  public void TestHUD() { OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Exploration ) ; }
+  public void TestHUD() {
+    debugMessages?.testHUD.TryInvoke() ;
+    OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Exploration ) ;
+  }
+#endregion
+
+
+#region DebugMessages
+  [Serializable]
+  class DebugMessages
+  {
+    [SerializeField] public DebugMessage testPause ;
+    [SerializeField] public DebugMessage testDialogue ;
+    [SerializeField] public DebugMessage testLoading ;
+    [SerializeField] public DebugMessage testHUD ;
+  }
+#endregion
 }
