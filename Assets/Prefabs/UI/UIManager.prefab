@@ -53,3 +53,16 @@ MonoBehaviour:
   _main_PausePanel: {fileID: 0}
   _loadingPanel: {fileID: 0}
   _loadingScreenTime: 5
+  debugMessages:
+    testPause:
+      isActive: 1
+      message: Invoked TestPause
+    testDialogue:
+      isActive: 1
+      message: Invoked TestDialogue
+    testLoading:
+      isActive: 1
+      message: Invoked TestLoading
+    testHUD:
+      isActive: 1
+      message: Invoked TestHUD

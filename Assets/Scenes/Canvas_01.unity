@@ -474,6 +474,38 @@ PrefabInstance:
       propertyPath: '_panels.Array.data[5]'
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testHUD.message
+      value: Invoked TestHUD
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testHUD.isActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testPause.message
+      value: Invoked TestPause
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testPause.isActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testLoading.message
+      value: Invoked TestLoading
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testDialogue.message
+      value: Invoked TestDialogue
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testLoading.isActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2427057073857517341, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
+      propertyPath: debugMessages.testDialogue.isActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8183214453608669041, guid: 37d1518521ff7f548b4c535a5c90be5a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

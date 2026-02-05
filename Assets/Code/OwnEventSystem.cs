@@ -25,7 +25,9 @@ public class OurEventSystem : MonoBehaviour
   
   
   #region Unity Editor
+  /*
     [SerializeField] EventSystemConfig config ;
+  */
     [SerializeField] StatisticsTrackingEvents statisticsTrackingEvents ;
     [SerializeField] GameEvents gameEvents ;
   #endregion
@@ -112,12 +114,14 @@ public class OurEventSystem : MonoBehaviour
 /// <summary>
 /// Publicly exposed fields for inspector assignments to the Events. People who like assigning their Listeners in the Inspector can do that.
 /// </summary>
+/* 
   [Serializable]
   private class EventSystemConfig 
   {
     [SerializeField] private string helloWorld = "hello world" ;
     // Extend here, whenever you feel like it and validate the reason for the new field to exist and how to implement it
   }
+*/
 
   #endregion
 }

@@ -38,6 +38,7 @@ namespace GameStatisticsApi
     private static RestApi _instance ;
 #endregion
 
+
 #region Unity Editor
     [SerializeField] private string apiHost = "127.0.0.1" ;
     [SerializeField] private string apiPort = "4141" ;
@@ -65,7 +66,7 @@ namespace GameStatisticsApi
     private void Awake()
     {
       if( _instance != null )
-        throw new Exception("Program attempted to create an instance of EventSystem, but one already existed.") ;
+        throw new Exception("Program attempted to create an instance of RestApi, but one already existed.") ;
       _instance = this ;
     }
 #endregion
