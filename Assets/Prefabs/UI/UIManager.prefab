@@ -44,3 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24113ae773b48554085d2c52af4b7576, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _panels:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _main_PausePanel: {fileID: 0}
+  _loadingPanel: {fileID: 0}
+  _loadingScreenTime: 5
