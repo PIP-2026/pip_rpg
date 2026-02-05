@@ -45,21 +45,22 @@ public class UIManager : MonoBehaviour
     if ( prev == next ) return ;
     foreach( var p in _panels )
     {
-      PanelType panelType = p.GetComponent<PanelObjectBase>().Type;
-      switch ( next)
+      PanelType panelType = p.GetComponent<PanelObjectBase>().Type ;
+
+      switch ( next )
       {
         case GameState.Exploration:
           // Toggle Panels accordingly
-          if( panelType == PanelType.HUD ) gameObject.SetActive( true ) ;
-          else gameObject.SetActive( false ) ;
+          if( panelType == PanelType.HUD ) p.gameObject.SetActive( true ) ;
+          else p.gameObject.SetActive( false ) ;
           break ;
         case GameState.Dialogue:
-          if( panelType == PanelType.Dialogue) gameObject.SetActive( true ) ;   // Why you not working?
-          else gameObject.SetActive( false ) ;
+          if( panelType == PanelType.Dialogue ) p.gameObject.SetActive( true ) ;   // Why you not working?
+          else p.gameObject.SetActive( false ) ;
           break ;
         case GameState.Menu:
-          if( panelType != PanelType.Menu) gameObject.SetActive( false ) ;
           if( _main_PausePanel.activeSelf == false ) _main_PausePanel.SetActive( true ) ;
+          if( panelType != PanelType.Menu ) p.gameObject.SetActive( false ) ;
           break ;
         case GameState.Loading:
           StartCoroutine( ShowLoadingScreen() ) ;
@@ -78,10 +79,12 @@ public class UIManager : MonoBehaviour
   #region Serializable
 
   #endregion
-  public void TestPause() {
-     OurEventSystem.GameStateChanged.Invoke( GameState.Exploration , GameState.Menu ); }  // WORKS
+  public void TestPause() { OurEventSystem.GameStateChanged.Invoke( GameState.Exploration , GameState.Menu ); }  // WORKS
      // TODO Put this to the GameManager that will handle it all
 
   public void TestDialogue(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Dialogue);} // Does NOT work yet
   public void TestLoading(){OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Loading);} // WORKS
+  // TODO Write that down
+
+  public void TestHUD() { OurEventSystem.GameStateChanged.Invoke(GameState.None, GameState.Exploration ) ; }
 }
