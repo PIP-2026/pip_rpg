@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7963055885239247136}
+  - component: {fileID: 6813443021216125914}
   - component: {fileID: 6264354636638731762}
   - component: {fileID: 7078101989017962695}
-  - component: {fileID: 6813443021216125914}
   m_Layer: 0
   m_Name: OurEventSystem
   m_TagString: Untagged
@@ -34,6 +34,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6813443021216125914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7223916101653885165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fab8ca9aa4f1534b9c133a92a293026, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statisticsTrackingEvents:
+    metaNavigation:
+      m_PersistentCalls:
+        m_Calls: []
+    dialogueLineSkip:
+      m_PersistentCalls:
+        m_Calls: []
+    anyButtonPress:
+      m_PersistentCalls:
+        m_Calls: []
+    anyInteract:
+      m_PersistentCalls:
+        m_Calls: []
+    tilesMoved:
+      m_PersistentCalls:
+        m_Calls: []
+  gameEvents:
+    gameStateChange:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!114 &6264354636638731762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80,17 +112,3 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
---- !u!114 &6813443021216125914
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7223916101653885165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7fab8ca9aa4f1534b9c133a92a293026, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  config:
-    helloWorld: hello world
