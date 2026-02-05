@@ -67,6 +67,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   endpointPath: /statistics/session
+  debugMessages:
+    onGet:
+      isActive: 1
+      message: Invoked GET Session
+    onPost:
+      isActive: 1
+      message: Invoked POST Session
+    onPut:
+      isActive: 1
+      message: Invoked PUT Session
+    onDelete:
+      isActive: 1
+      message: Invoked DELETE Session
 --- !u!114 &7152466519367729470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80,6 +93,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   endpointPath: /statistics/input
+  debugMessages:
+    onGet:
+      isActive: 1
+      message: Invoked GET Input
+    onPost:
+      isActive: 1
+      message: Invoked POST Input
+    onPut:
+      isActive: 1
+      message: Invoked PUT Input
+    onDelete:
+      isActive: 1
+      message: Invoked DELETE Input
 --- !u!114 &3409700431158624375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -93,6 +119,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   endpointPath: /statistics/interaction/npc
+  debugMessages:
+    onGet:
+      isActive: 1
+      message: Invoked GET Interaction
+    onPost:
+      isActive: 1
+      message: Invoked POST Interaction
+    onPut:
+      isActive: 1
+      message: Invoked PUT Interaction
+    onDelete:
+      isActive: 1
+      message: Invoked DELETE Interaction
 --- !u!114 &8929942537784497568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,3 +145,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   endpointPath: /statistics/time
+  debugMessages:
+    onGet:
+      isActive: 1
+      message: Invoked GET Time
+    onPost:
+      isActive: 1
+      message: Invoked POST Time
+    onPut:
+      isActive: 1
+      message: Invoked PUT Time
+    onDelete:
+      isActive: 1
+      message: Invoked DELETE Time
