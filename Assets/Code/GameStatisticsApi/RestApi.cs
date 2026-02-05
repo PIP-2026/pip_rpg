@@ -44,25 +44,24 @@ namespace GameStatisticsApi
 
     [Header("Endpoints")]
     [SerializeField] private ApiPath session ;
+    [SerializeField] private ApiPath input ;
+    [SerializeField] private ApiPath interaction ;
+    [SerializeField] private ApiPath time ;
 #endregion
 
 
 #region Properties
-    public string Host => apiHost ;
-    public string Port => apiPort ;
-#endregion
-
-
-#region Cache
-    internal Dictionary<int,SessionRowData> CachedSessionData { get ; } = new () ;
 #endregion
 
 
 #region Static Properties
-    public static ApiPath Session => _instance.session ;
-    public static ApiPath Input => throw new NotImplementedException() ;
-    public static ApiPath Interaction => throw new NotImplementedException() ;
-    public static ApiPath Time => throw new NotImplementedException() ;
+    public static ApiPath Session     => _instance.session ;
+    public static ApiPath Input       => _instance.input ;
+    public static ApiPath Interaction => _instance.interaction ;
+    public static ApiPath Time        => _instance.time ;
+
+    public static string Host => _instance.apiHost ;
+    public static string Port => _instance.apiPort ;
 #endregion 
 
 

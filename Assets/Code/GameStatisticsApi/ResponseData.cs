@@ -7,6 +7,9 @@ namespace GameStatisticsApi.ResponseData
   internal class RequestResponse
   {
     public bool ok ;
+    public bool cacheable ;
+    public string[] custody_chain ;
+    public string _meta ;
     public string error ;
   }
 
@@ -47,11 +50,62 @@ namespace GameStatisticsApi.ResponseData
   [Serializable]
   internal class GetSessionResponse : RequestResponse
   {
-    public bool cacheable ;
-    public string[] custody_chain ;
     public SessionRowData[] data;
     public ResponseContext<SessionContextKeys> context;
-    public string _meta ;
+  }
+#endregion
+
+
+#region Input
+//InputRowData
+  [Serializable]
+  internal class InputRowData
+  {
+    public int session_id ;
+
+    // TODO: add appropriate fields
+  }
+  [Serializable]
+  internal class GetInputResponse : RequestResponse
+  {
+    public InputRowData[] data;
+    public ResponseContext<SessionContextKeys> context;
+  }
+#endregion
+
+
+#region Interaction
+//InteractionRowData
+  [Serializable]
+  internal class InteractionRowData
+  {
+    public int session_id ;
+
+    // TODO: add appropriate fields
+  }
+  [Serializable]
+  internal class GetInteractionResponse : RequestResponse
+  {
+    public InteractionRowData[] data;
+    public ResponseContext<SessionContextKeys> context;
+  }
+#endregion
+
+
+#region Time
+//TimeRowData
+  [Serializable]
+  internal class TimeRowData
+  {
+    public int session_id ;
+
+    // TODO: add appropriate fields
+  }
+  [Serializable]
+  internal class GetTimeResponse : RequestResponse
+  {
+    public TimeRowData[] data;
+    public ResponseContext<SessionContextKeys> context;
   }
 #endregion
 }

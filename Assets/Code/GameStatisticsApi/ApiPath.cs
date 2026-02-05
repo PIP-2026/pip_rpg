@@ -29,18 +29,14 @@ namespace GameStatisticsApi
     ///   <para>
     ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
     ///   </para>
-    ///   <para>
-    ///     TODO: Should probably be replaced by static references to the relevant properties. (Host,Port,etc)
-    ///   </para>
     /// </remarks>
     /// <summary>
-    ///   The RestApi this ApiPath belongs to.
+    ///   The base path of this API endpoint, not including parameters.
     /// </summary>
-    /// <value>The singleton instance of the RestApi.</value>
-    [SerializeField] protected RestApi _api ;
+    /// <value>URL as <c>/</c> segmented string</value>
     [SerializeField] protected string endpointPath = "" ;
 
-    public virtual string BaseURI => $"http://{_api.Host}:{_api.Port}{endpointPath}" ;
+    public virtual string BaseURI => $"http://{RestApi.Host}:{RestApi.Port}{endpointPath}" ;
 
 #region GET
     public virtual IEnumerator Get( int[] ids, Action<string> onResult )
