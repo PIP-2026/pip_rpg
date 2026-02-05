@@ -214,7 +214,7 @@ namespace GameStatisticsApi
     /// </exception>
     protected IEnumerator PostRequest( string uri, WWWForm form, Action<string> onResult )
     {
-      UnityWebRequest webRequest = UnityWebRequest.Get( uri ) ;
+      UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) ;
 #if UNITY_EDITOR
       Debug.Log( $"Dispatching a POST request to \"{uri}\"." ) ;
 #endif

@@ -50,10 +50,6 @@ namespace GameStatisticsApi
 #endregion
 
 
-#region Properties
-#endregion
-
-
 #region Static Properties
     public static ApiPath Session     => _instance.session ;
     public static ApiPath Input       => _instance.input ;
