@@ -38,6 +38,7 @@ namespace GameStatisticsApi
     private static RestApi _instance ;
 #endregion
 
+
 #region Unity Editor
     [SerializeField] private string apiHost = "127.0.0.1" ;
     [SerializeField] private string apiPort = "4141" ;
