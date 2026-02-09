@@ -393,6 +393,7 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
   const sql = "INSERT INTO session (started_at,ended_at) VALUES (?,?)" ;
   let sql_params = [] ;
   /******/
+  console.log(request) ;
 
 
   /** Add Context */
@@ -409,6 +410,7 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
   
 
   /** Validate Data */
+
   if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
     /**
      * TODO: ensure that the fields contain valid datetime data
@@ -424,6 +426,7 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
 
 
   /** Query SQL Server */
+  console.log(sql_params) ;
   let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
   /**
     * TODO: error handling

@@ -53,6 +53,13 @@ namespace GameStatisticsApi.ResponseData
     public SessionRowData[] data;
     public ResponseContext<SessionContextKeys> context;
   }
+// GetSessionResponse
+  [Serializable]
+  internal class PostSessionResponse : RequestResponse
+  {
+    public int insert_id ;
+    public ResponseContext<SessionContextKeys> context;
+  }
 #endregion
 
 

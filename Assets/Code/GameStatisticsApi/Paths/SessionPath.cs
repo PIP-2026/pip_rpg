@@ -16,7 +16,7 @@ namespace GameStatisticsApi
 
 
 #region GET
-    public override IEnumerator Get( int[] ids ) => throw new InvalidOperationException( "SessionPath does not handle more than one id." ) ;
+    public override IEnumerator Get( int[] ids ) => throw new InvalidOperationException( "SessionPath GET does not handle more than one id." ) ;
     public override IEnumerator Get( int id )
     {
       yield return StartCoroutine( base.Get( id, (text) => {
@@ -50,12 +50,23 @@ namespace GameStatisticsApi
 
 
 #region POST
-    public override IEnumerator Post( int id, WWWForm form ) { throw new NotImplementedException() ; }
+    public override IEnumerator Post( int[] ids, byte[] data ) => throw new InvalidOperationException( "SessionPath POST does not handle any id parameters." ) ;
+    public override IEnumerator Post( int id, byte[] data ) => Post( new []{-1}, data ) ;
+    public override IEnumerator Post( byte[] data )
+    {
+      yield return StartCoroutine( base.Post( data, (text) =>
+        {
+          PostSessionResponse res = JsonUtility.FromJson<PostSessionResponse>(text) ;
+
+          Debug.Log( $"Inserted a new entry into session with an id of {res.insert_id}." ) ;
+        } )
+      ) ;
+    }
 #endregion
 
 
 #region PUT
-    public override IEnumerator Put( int id, WWWForm form) { throw new NotImplementedException() ; }
+    public override IEnumerator Put( int id, byte[] data ) { throw new NotImplementedException() ; }
 #endregion
 
 

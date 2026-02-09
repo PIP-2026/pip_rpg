@@ -559,14 +559,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2618291869159999941, guid: 92c05d0a7e600694f8370ba3e7eeb519, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 568394342}
-    - target: {fileID: 5762211456606789689, guid: 92c05d0a7e600694f8370ba3e7eeb519, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 568394342}
     - target: {fileID: 7874796255959568431, guid: 92c05d0a7e600694f8370ba3e7eeb519, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -647,10 +639,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8398168849819377515, guid: 92c05d0a7e600694f8370ba3e7eeb519, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 568394342}
     - target: {fileID: 8782998989654318946, guid: 92c05d0a7e600694f8370ba3e7eeb519, type: 3}
       propertyPath: m_Name
       value: Canvas
