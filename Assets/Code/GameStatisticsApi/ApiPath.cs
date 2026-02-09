@@ -236,7 +236,6 @@ namespace GameStatisticsApi
     protected IEnumerator PostRequest( string uri, WWWForm form, Action<string> onResult )
     {
       debugMessages?.onPost.TryInvoke() ;
-      UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) ;
       using (UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) )
       {
 #if UNITY_EDITOR
@@ -287,6 +286,7 @@ namespace GameStatisticsApi
     /// </exception>
     protected IEnumerator PutRequest( string uri, string jsonData, Action<string> onResult )
     {
+      debugMessages?.onPut.TryInvoke() ;
       using (UnityWebRequest webRequest = UnityWebRequest.Put( uri, Encoding.UTF8.GetBytes(jsonData) ) )
       {
 #if UNITY_EDITOR
@@ -336,6 +336,7 @@ namespace GameStatisticsApi
     /// </exception>
     protected IEnumerator DeleteRequest( string uri, Action<string> onResult )
     {
+      debugMessages?.onDelete.TryInvoke() ;
       using (UnityWebRequest webRequest = UnityWebRequest.Delete( uri ) )
       {
 #if UNITY_EDITOR
@@ -356,24 +357,7 @@ namespace GameStatisticsApi
       }
 
       onResult?.Invoke( webRequest.downloadHandler.text ) ;
-    }
-#endregion
-
-
-#region PUT Request
-    protected IEnumerator PutRequest( string uri, WWWForm form, Action<string> onResult )
-    {
-      debugMessages?.onPut.TryInvoke() ;
-      throw new NotImplementedException() ;
-    }
-#endregion
-
-
-#region DELETE Request
-    protected IEnumerator DeleteRequest( string uri, Action<string> onResult )
-    {
-      debugMessages?.onDelete.TryInvoke() ;
-      throw new NotImplementedException() ;
+      }
     }
 #endregion
 
@@ -387,8 +371,6 @@ namespace GameStatisticsApi
     [SerializeField] public DebugMessage onPut ;
     [SerializeField] public DebugMessage onDelete ;
   }
-      }
-    }
 #endregion
   }
 
