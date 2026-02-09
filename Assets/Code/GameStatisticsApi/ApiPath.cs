@@ -37,6 +37,7 @@ namespace GameStatisticsApi
     /// </summary>
     /// <value>URL as <c>/</c> segmented string</value>
     [SerializeField] protected string endpointPath = "" ;
+    [SerializeField] private DebugMessages debugMessages ;
 
     public virtual string BaseURI => $"http://{RestApi.Host}:{RestApi.Port}{endpointPath}" ;
 
@@ -183,6 +184,7 @@ namespace GameStatisticsApi
     /// </exception>
     protected IEnumerator GetRequest( string uri, Action<string> onResult )
     {
+      debugMessages?.onGet.TryInvoke() ;
       using ( UnityWebRequest webRequest = UnityWebRequest.Get( uri ) )
       {
 #if UNITY_EDITOR
@@ -233,6 +235,8 @@ namespace GameStatisticsApi
     /// </exception>
     protected IEnumerator PostRequest( string uri, WWWForm form, Action<string> onResult )
     {
+      debugMessages?.onPost.TryInvoke() ;
+      UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) ;
       using (UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) )
       {
 #if UNITY_EDITOR
@@ -352,6 +356,37 @@ namespace GameStatisticsApi
       }
 
       onResult?.Invoke( webRequest.downloadHandler.text ) ;
+    }
+#endregion
+
+
+#region PUT Request
+    protected IEnumerator PutRequest( string uri, WWWForm form, Action<string> onResult )
+    {
+      debugMessages?.onPut.TryInvoke() ;
+      throw new NotImplementedException() ;
+    }
+#endregion
+
+
+#region DELETE Request
+    protected IEnumerator DeleteRequest( string uri, Action<string> onResult )
+    {
+      debugMessages?.onDelete.TryInvoke() ;
+      throw new NotImplementedException() ;
+    }
+#endregion
+
+
+#region DebugMessages
+  [Serializable]
+  class DebugMessages
+  {
+    [SerializeField] public DebugMessage onGet ;
+    [SerializeField] public DebugMessage onPost ;
+    [SerializeField] public DebugMessage onPut ;
+    [SerializeField] public DebugMessage onDelete ;
+  }
       }
     }
 #endregion
