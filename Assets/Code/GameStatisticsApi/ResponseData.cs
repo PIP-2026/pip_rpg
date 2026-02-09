@@ -27,6 +27,14 @@ namespace GameStatisticsApi.ResponseData
     public string of ;
     public string[] forT ;
   }
+
+// DeletionInfo
+  [Serializable]
+  internal class DeletionInfo
+  {
+    public string location ;
+    public int count ;
+  }
 #endregion
 
 
@@ -53,11 +61,25 @@ namespace GameStatisticsApi.ResponseData
     public SessionRowData[] data;
     public ResponseContext<SessionContextKeys> context;
   }
-// GetSessionResponse
+// PostSessionData
+  [Serializable]
+  internal class PostSessionData
+  {
+    public string started_at ;
+    public string ended_at ;
+  }
+// PostSessionResponse
   [Serializable]
   internal class PostSessionResponse : RequestResponse
   {
     public int insert_id ;
+    public ResponseContext<SessionContextKeys> context;
+  }
+// DeleteSessionResponse
+  [Serializable]
+  internal class DeleteSessionResponse : RequestResponse
+  {
+    public DeletionInfo[] deletions ;
     public ResponseContext<SessionContextKeys> context;
   }
 #endregion

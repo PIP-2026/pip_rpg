@@ -352,6 +352,8 @@ namespace GameStatisticsApi
 #if UNITY_EDITOR
         Debug.Log( $"Dispatching a DELETE request to \"{uri}\"." ) ;
 #endif
+        webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer() ;
+        
         yield return webRequest.SendWebRequest() ;
 
         if( webRequest.result != UnityWebRequest.Result.Success )

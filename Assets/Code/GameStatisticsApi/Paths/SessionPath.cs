@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using GameStatisticsApi.ResponseData;
 using UnityEngine;
@@ -71,7 +72,17 @@ namespace GameStatisticsApi
 
 
 #region DELETE
-    public override IEnumerator Delete( int id ) { throw new NotImplementedException() ; }
+    public override IEnumerator Delete( int[] ids ) => throw new InvalidOperationException( "SessionPath DELETE does not handle more than one id." ) ;
+    public override IEnumerator Delete( int id )
+    {
+      yield return StartCoroutine( base.Delete( id, (text) =>
+        {
+          DeleteSessionResponse res = JsonUtility.FromJson<DeleteSessionResponse>(text) ;
+
+          Debug.Log( $"Deleted {res.deletions.Sum( (d) => d.count )} entries from session and related tables." ) ;
+        } )
+      ) ;
+    }
 #endregion
     
   }

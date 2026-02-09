@@ -56,23 +56,35 @@ namespace GameStatisticsApi
     public static Endpoints Endpoints = new() ;
     public static string Host => _instance.apiHost ;
     public static string Port => _instance.apiPort ;
-#endregion 
+#endregion
 
 
 #region TEST
     public void OnClickSave()
     {
       byte[] rawData = Encoding.UTF8.GetBytes(
-        "{" +
-        $"\"started_at\": \"{(DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString()}\"," +
-        $"\"ended_at\": \"{DateTime.Now.ToString()}\"" +
-        "}"
+        JsonUtility.ToJson(new PostSessionData() {
+          started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
+          ended_at = DateTime.Now.ToString() } )
       ) ;
       StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) );
     }
     public void OnClickLoad()
     {
       StartCoroutine( (Endpoints.Session as SessionPath).Get() ) ;
+    }
+    public void OnClickUpdate()
+    {
+      byte[] rawData = Encoding.UTF8.GetBytes(
+        JsonUtility.ToJson(new PostSessionData() {
+          started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
+          ended_at = DateTime.Now.ToString() } )
+      ) ;
+      StartCoroutine( (Endpoints.Session as SessionPath).Put(3,rawData) ) ;
+    }
+    public void OnClickDelete()
+    {
+      StartCoroutine( (Endpoints.Session as SessionPath).Delete(3) ) ;
     }
 #endregion 
 

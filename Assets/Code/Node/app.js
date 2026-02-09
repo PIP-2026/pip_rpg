@@ -393,7 +393,6 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
   const sql = "INSERT INTO session (started_at,ended_at) VALUES (?,?)" ;
   let sql_params = [] ;
   /******/
-  console.log(request) ;
 
 
   /** Add Context */
@@ -410,7 +409,6 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
   
 
   /** Validate Data */
-
   if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
     /**
      * TODO: ensure that the fields contain valid datetime data
@@ -426,7 +424,6 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
 
 
   /** Query SQL Server */
-  console.log(sql_params) ;
   let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
   /**
     * TODO: error handling
@@ -710,18 +707,16 @@ app.put( "/statistics/time", asyncMiddleware( async (request,response,next) => {
 
 import { responseBodyDELETE } from './format/deletef.js';
 
-app.delete( "/statistics/session", asyncMiddleware( async (request,response,next) => {
+app.delete( "/statistics/session/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyDELETE ;
-  const sql = "DELETE FROM session WHERE id = :id" ;
+  const sql = "DELETE FROM session WHERE id = ?" ;
   let sql_params = [] ;
-  let deletions = {
-    "/statistics/session": 0,
-    "/statistics/input": 0,
-    "/statistics/interaction/npc": 0,
-    "/statistics/time": 0,
-    "_comment": "location and number of deletions"
-  } ;
+  responseBody.deletions = [
+    { "location": "/statistics/input", "count": 0 },
+    { "location": "/statistics/interaction/npc", "count": 0 },
+    { "location": "/statistics/time", "count": 0 }
+  ] ;
   /******/
 
 
@@ -736,18 +731,30 @@ app.delete( "/statistics/session", asyncMiddleware( async (request,response,next
   }
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
+  
+
+  /** Validate Parameter */
+  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('id') && Number.isInteger( parseInt(request.params.id) ) ) {
+    sql_params.push( request.params.id ) ;
+  } else {
+    responseBody.ok = false ;
+    responseBody.error = `Invalid parameter.` ;
+    response.status(400) ;
+    response.json( responseBody ) ;
+    return ;
+  }
+  /** End */
 
 
   /** Query SQL Server */
-  /**
-    * TODO: SQL Query
-    */
+  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  responseBody.deletions.push( { "location": "/statistics/session", "count": okPacket.affectedRows } ) ;
   /** End */
   
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/input", asyncMiddleware( async (request,response,next) => {
+app.delete( "/statistics/input/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyDELETE ;
   const sql = "DELETE FROM input WHERE id = :id" ;
@@ -781,7 +788,7 @@ app.delete( "/statistics/input", asyncMiddleware( async (request,response,next) 
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/interaction/npc", asyncMiddleware( async (request,response,next) => {
+app.delete( "/statistics/interaction/npc/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyDELETE ;
   const sql = "DELETE FROM interaction_npc WHERE id = :id" ;
@@ -815,7 +822,7 @@ app.delete( "/statistics/interaction/npc", asyncMiddleware( async (request,respo
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/time", asyncMiddleware( async (request,response,next) => {
+app.delete( "/statistics/time/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyDELETE ;
   const sql = "DELETE FROM time WHERE id = :id" ;
