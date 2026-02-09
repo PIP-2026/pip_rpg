@@ -188,23 +188,23 @@ namespace GameStatisticsApi
       using ( UnityWebRequest webRequest = UnityWebRequest.Get( uri ) )
       {
 #if UNITY_EDITOR
-      Debug.Log( $"Dispatching a GET request to \"{uri}\"." ) ;
+        Debug.Log( $"Dispatching a GET request to \"{uri}\"." ) ;
 #endif
-      yield return webRequest.SendWebRequest() ;
+        yield return webRequest.SendWebRequest() ;
 
-      if( webRequest.result != UnityWebRequest.Result.Success )
-      {
+        if( webRequest.result != UnityWebRequest.Result.Success )
+        {
 #if UNITY_EDITOR
-        Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
+         Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
 #endif
-        yield break ;
-      } else {
+          yield break ;
+        } else {
 #if UNITY_EDITOR
-        Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
+         Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
 #endif
-      }
+        }
 
-      onResult?.Invoke( webRequest.downloadHandler.text ) ;
+        onResult?.Invoke( webRequest.downloadHandler.text ) ;
       }
     }
 #endregion
@@ -239,23 +239,23 @@ namespace GameStatisticsApi
       using (UnityWebRequest webRequest = UnityWebRequest.Post( uri, form ) )
       {
 #if UNITY_EDITOR
-      Debug.Log( $"Dispatching a POST request to \"{uri}\"." ) ;
+       Debug.Log( $"Dispatching a POST request to \"{uri}\"." ) ;
 #endif
-      yield return webRequest.SendWebRequest() ;
+        yield return webRequest.SendWebRequest() ;
 
-      if( webRequest.result != UnityWebRequest.Result.Success )
-      {
+        if( webRequest.result != UnityWebRequest.Result.Success )
+        {
 #if UNITY_EDITOR
-        Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
+         Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
 #endif
-        yield break ;
-      } else {
+          yield break ;
+        } else {
 #if UNITY_EDITOR
-        Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
+          Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
 #endif
-      }
+        }
 
-      onResult?.Invoke( webRequest.downloadHandler.text ) ;
+        onResult?.Invoke( webRequest.downloadHandler.text ) ;
       }
     }
 #endregion
@@ -290,23 +290,23 @@ namespace GameStatisticsApi
       using (UnityWebRequest webRequest = UnityWebRequest.Put( uri, Encoding.UTF8.GetBytes(jsonData) ) )
       {
 #if UNITY_EDITOR
-      Debug.Log( $"Dispatching a PUT request to \"{uri}\"." ) ;
+        Debug.Log( $"Dispatching a PUT request to \"{uri}\"." ) ;
 #endif
-      yield return webRequest.SendWebRequest() ;
+        yield return webRequest.SendWebRequest() ;
 
-      if( webRequest.result != UnityWebRequest.Result.Success )
-      {
+        if( webRequest.result != UnityWebRequest.Result.Success )
+        {
 #if UNITY_EDITOR
-        Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
+          Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
 #endif
-        yield break ;
-      } else {
+          yield break ;
+        } else {
 #if UNITY_EDITOR
-        Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
+         Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
 #endif
-      }
+        }
 
-      onResult?.Invoke( webRequest.downloadHandler.text ) ;
+        onResult?.Invoke( webRequest.downloadHandler.text ) ;
       }
     }
 #endregion
@@ -340,23 +340,23 @@ namespace GameStatisticsApi
       using (UnityWebRequest webRequest = UnityWebRequest.Delete( uri ) )
       {
 #if UNITY_EDITOR
-      Debug.Log( $"Dispatching a DELETE request to \"{uri}\"." ) ;
+        Debug.Log( $"Dispatching a DELETE request to \"{uri}\"." ) ;
 #endif
-      yield return webRequest.SendWebRequest() ;
+        yield return webRequest.SendWebRequest() ;
 
-      if( webRequest.result != UnityWebRequest.Result.Success )
-      {
+        if( webRequest.result != UnityWebRequest.Result.Success )
+        {
 #if UNITY_EDITOR
         Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
 #endif
-        yield break ;
-      } else {
+          yield break ;
+        } else {
 #if UNITY_EDITOR
-        Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
+          Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
 #endif
-      }
+        }
 
-      onResult?.Invoke( webRequest.downloadHandler.text ) ;
+        onResult?.Invoke( webRequest.downloadHandler.text ) ;
       }
     }
 #endregion
