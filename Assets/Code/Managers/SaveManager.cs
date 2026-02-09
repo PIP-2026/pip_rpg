@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
+using GameStatisticsApi;
+using GameStatisticsApi.ResponseData;
 using UnityEngine;
-
+using UnityEngine.Networking;
 
 /// <remarks>
 ///   <para>
@@ -24,6 +27,7 @@ public class SaveManager : MonoBehaviour
 {
   private static SaveManager _instance ;
   private UserProfile _activeUserProfile ;
+  private int _currentSessionId ;
 
 #region UnityEditor
   [SerializeField] private int _minsToAutoSave = 5 ;    // mins until 
@@ -43,10 +47,48 @@ public class SaveManager : MonoBehaviour
 
 
 #region Save/Load
-public void SaveProfile() { throw new NotImplementedException() ; }
-public void LoadProfile() { throw new NotImplementedException() ; }
-private void SetActiveProfile() { throw new NotImplementedException() ; }
-private void AutoSave() { throw new NotImplementedException() ; }
+public void SaveProfile()
+  {
+    string json = SerializeData() ;
+    WWWForm form = new() ;
+    form.AddField( "profileData" , json ) ;
+    int[] ids = new int[] { _activeUserProfile.UserId, _currentSessionId } ;
+    if( _currentSessionId > 0 )
+    {
+      StartCoroutine( RestApi.Session.Put( ids, form, (onResult) =>
+      {
+        Debug.Log( $"{ids} :Existing file updated." ) ;
+      })) ;
+    }
+    else
+    {
+      StartCoroutine( RestApi.Session.Post( ids, form , (onResult) =>
+      {
+        Debug.Log( $"New save file under {ids} created" ) ;
+      })) ;
+    }
+  }
+public void LoadProfile( int sessionId )
+  {
+    StartCoroutine( RestApi.Session.Get( sessionId, (onResult) =>
+    {
+      if( !string.IsNullOrEmpty( onResult ) )
+      {
+        _currentSessionId = sessionId ;
+        DeserializeData( onResult ) ;
+        Debug.Log( $"Profile {sessionId} loaded and deserialized" ) ;
+      }
+    })) ;
+  }
+private IEnumerator AutoSave()
+  {
+    while (true)
+    {
+      yield return new WaitForSecondsRealtime( _minsToAutoSave * 60 ) ;
+      SaveProfile() ;
+      Debug.Log( $"AutoSave initiated." ) ;
+    }
+  }
 #endregion
 
 
@@ -57,7 +99,7 @@ private void DecryptData() { throw new NotImplementedException() ; }
 
 
 #region De-/Serialization
-private void SerializeData() { throw new NotImplementedException() ; }
-private void DeserializeData() { throw new NotImplementedException() ; }
+private string SerializeData() { return JsonUtility.ToJson( _activeUserProfile ) ; }
+private void DeserializeData( string jsonData ) { _activeUserProfile = JsonUtility.FromJson<UserProfile>( jsonData ) ; }
 #endregion
 }
