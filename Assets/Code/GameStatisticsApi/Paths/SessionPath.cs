@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using GameStatisticsApi.ResponseData;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace GameStatisticsApi
 
 
 #region GET
-    public override IEnumerator Get( int[] ids ) => throw new InvalidOperationException( "SessionPath does not handle more than one id." ) ;
+    public override IEnumerator Get( int[] ids ) => throw new InvalidOperationException( "SessionPath GET does not handle more than one id." ) ;
     public override IEnumerator Get( int id )
     {
       yield return StartCoroutine( base.Get( id, (text) => {
@@ -50,17 +51,48 @@ namespace GameStatisticsApi
 
 
 #region POST
-    public override IEnumerator Post( int id, WWWForm form ) { throw new NotImplementedException() ; }
+    public override IEnumerator Post( int[] ids, byte[] data ) => throw new InvalidOperationException( "SessionPath POST does not handle any id parameters." ) ;
+    public override IEnumerator Post( int id, byte[] data ) => Post( new []{-1}, data ) ;
+    public override IEnumerator Post( byte[] data )
+    {
+      yield return StartCoroutine( base.Post( data, (text) =>
+        {
+          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
+
+          Debug.Log( $"Inserted a new entry into session with an id of {res.insert_id}." ) ;
+        } )
+      ) ;
+    }
 #endregion
 
 
 #region PUT
-    public override IEnumerator Put( int id, WWWForm form) { throw new NotImplementedException() ; }
+    public override IEnumerator Put( int[] ids, byte[] data ) => throw new InvalidOperationException( "SessionPath PUT does not handle more than one id." ) ;
+    public override IEnumerator Put( int id, byte[] data )
+    {
+      yield return StartCoroutine( base.Put( id, data, (text) =>
+        {
+          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
+
+          Debug.Log( $"Updated the session entry with the id of {res.insert_id}." ) ;
+        } )
+      ) ;
+    }
 #endregion
 
 
 #region DELETE
-    public override IEnumerator Delete( int id ) { throw new NotImplementedException() ; }
+    public override IEnumerator Delete( int[] ids ) => throw new InvalidOperationException( "SessionPath DELETE does not handle more than one id." ) ;
+    public override IEnumerator Delete( int id )
+    {
+      yield return StartCoroutine( base.Delete( id, (text) =>
+        {
+          DeleteSessionResponse res = JsonUtility.FromJson<DeleteSessionResponse>(text) ;
+
+          Debug.Log( $"Deleted {res.deletions.Sum( (d) => d.count )} entries from session and related tables." ) ;
+        } )
+      ) ;
+    }
 #endregion
     
   }

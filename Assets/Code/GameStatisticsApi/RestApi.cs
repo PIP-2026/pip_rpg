@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GameStatisticsApi.ResponseData;
 using UnityEditorInternal;
+using System.Text;
 
 namespace GameStatisticsApi 
 {
@@ -52,13 +53,22 @@ namespace GameStatisticsApi
 
 
 #region Static Properties
-    public static ApiPath Session     => _instance.session ;
-    public static ApiPath Input       => _instance.input ;
-    public static ApiPath Interaction => _instance.interaction ;
-    public static ApiPath Time        => _instance.time ;
-
+    public static Endpoints Endpoints = new() ;
     public static string Host => _instance.apiHost ;
     public static string Port => _instance.apiPort ;
+#endregion
+
+
+#region TEST
+    public void OnClickSave()
+    {
+      byte[] rawData = Encoding.UTF8.GetBytes(
+        JsonUtility.ToJson(new PostOrPutSessionData() {
+          started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
+          ended_at = DateTime.Now.ToString() } )
+      ) ;
+      StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) ) ;
+    }
 #endregion 
 
 
@@ -67,8 +77,25 @@ namespace GameStatisticsApi
     {
       if( _instance != null )
         throw new Exception("Program attempted to create an instance of RestApi, but one already existed.") ;
+      
       _instance = this ;
+
+      Endpoints.Session     = _instance.session ;
+      Endpoints.Input       = _instance.input ;
+      Endpoints.Interaction = _instance.interaction ;
+      Endpoints.Time        = _instance.time ;
     }
 #endregion
   }
+
+#region Endpoints
+  public class Endpoints
+  {
+    public ApiPath Session { get ; internal set ; }
+    public ApiPath Input { get ; internal set ; }
+    public ApiPath Interaction { get ; internal set ; }
+    public ApiPath Time { get ; internal set ; }
+  }
+#endregion 
 }
+

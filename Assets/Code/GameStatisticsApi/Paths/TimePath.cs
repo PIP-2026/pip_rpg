@@ -23,12 +23,12 @@ namespace GameStatisticsApi
 
 
 #region POST
-    public override IEnumerator Post( int id, WWWForm form ) { throw new NotImplementedException() ; }
+    public override IEnumerator Post( int id, byte[] data ) { throw new NotImplementedException() ; }
 #endregion
 
 
 #region PUT
-    public override IEnumerator Put( int id, WWWForm form) { throw new NotImplementedException() ; }
+    public override IEnumerator Put( int id, byte[] data ) { throw new NotImplementedException() ; }
 #endregion
 
 
