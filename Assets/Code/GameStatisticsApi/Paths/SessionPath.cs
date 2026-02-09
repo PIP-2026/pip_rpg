@@ -13,6 +13,9 @@ namespace GameStatisticsApi
   {
 #region Cache
     internal Dictionary<int,SessionRowData> Cache { get ; } = new () ;
+    /** TEST */
+    public int MySessionId = -1 ;
+    /** End */
 #endregion
 
 
@@ -57,9 +60,10 @@ namespace GameStatisticsApi
     {
       yield return StartCoroutine( base.Post( data, (text) =>
         {
-          PostSessionResponse res = JsonUtility.FromJson<PostSessionResponse>(text) ;
+          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
 
           Debug.Log( $"Inserted a new entry into session with an id of {res.insert_id}." ) ;
+          MySessionId = res.insert_id ; // TEST
         } )
       ) ;
     }
@@ -67,7 +71,27 @@ namespace GameStatisticsApi
 
 
 #region PUT
-    public override IEnumerator Put( int id, byte[] data ) { throw new NotImplementedException() ; }
+    public override IEnumerator Put( int[] ids, byte[] data ) => throw new InvalidOperationException( "SessionPath PUT does not handle more than one id." ) ;
+    public override IEnumerator Put( int id, byte[] data )
+    {
+      yield return StartCoroutine( base.Put( id, data, (text) =>
+        {
+          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
+
+          Debug.Log( $"Updated the session entry with the id of {res.insert_id}." ) ;
+        } )
+      ) ;
+    }
+    public IEnumerator Put( byte[] data ) // TEST
+    {
+      yield return StartCoroutine( base.Put( MySessionId, data, (text) =>
+        {
+          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
+
+          Debug.Log( $"Updated the session entry with the id of {res.insert_id}." ) ;
+        } )
+      ) ;
+    }
 #endregion
 
 

@@ -552,10 +552,10 @@ app.post( "/statistics/time", asyncMiddleware( async (request,response,next) => 
 
 import { responseBodyPUT } from './format/putf.js';
 
-app.put( "/statistics/session", asyncMiddleware( async (request,response,next) => {
+app.put( "/statistics/session/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyPUT ;
-  const sql = "UPDATE session SET ? = ? WHERE id = :id" ;
+  const sql = "UPDATE session SET ? = ? WHERE id = ?" ;
   let sql_params = [] ;
   /******/
 
@@ -571,6 +571,19 @@ app.put( "/statistics/session", asyncMiddleware( async (request,response,next) =
   }
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
+  
+
+  /** Validate Parameters */
+  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('id') && Number.isInteger( parseInt(request.params.id) ) ) {
+    responseBody.insert_id = request.params.id ;
+  } else {
+    responseBody.ok = false ;
+    responseBody.error = `Invalid parameter.` ;
+    response.status(400) ;
+    response.json( responseBody ) ;
+    return ;
+  }
+  /** End*/
   
 
   /** Validate Data */
@@ -589,7 +602,7 @@ app.put( "/statistics/session", asyncMiddleware( async (request,response,next) =
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/input", asyncMiddleware( async (request,response,next) => {
+app.put( "/statistics/input/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyPUT ;
   const sql = "UPDATE input SET ? = ? WHERE id = :id" ;
@@ -626,7 +639,7 @@ app.put( "/statistics/input", asyncMiddleware( async (request,response,next) => 
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/interaction/npc", asyncMiddleware( async (request,response,next) => {
+app.put( "/statistics/interaction/npc/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyPUT ;
   const sql = "UPDATE interaction_npc SET ? = ? WHERE id = :id" ;
@@ -663,7 +676,7 @@ app.put( "/statistics/interaction/npc", asyncMiddleware( async (request,response
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/time", asyncMiddleware( async (request,response,next) => {
+app.put( "/statistics/time/:id", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyPUT ;
   const sql = "UPDATE time SET ? = ? WHERE id = :id" ;

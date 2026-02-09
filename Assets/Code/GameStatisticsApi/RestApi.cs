@@ -63,28 +63,24 @@ namespace GameStatisticsApi
     public void OnClickSave()
     {
       byte[] rawData = Encoding.UTF8.GetBytes(
-        JsonUtility.ToJson(new PostSessionData() {
+        JsonUtility.ToJson(new PostOrPutSessionData() {
           started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
           ended_at = DateTime.Now.ToString() } )
       ) ;
-      StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) );
+      if( (Endpoints.Session as SessionPath).MySessionId == -1 )
+      {
+        StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) );
+      } else {
+        StartCoroutine( (Endpoints.Session as SessionPath).Put( rawData ) );
+      }
     }
     public void OnClickLoad()
     {
       StartCoroutine( (Endpoints.Session as SessionPath).Get() ) ;
     }
-    public void OnClickUpdate()
-    {
-      byte[] rawData = Encoding.UTF8.GetBytes(
-        JsonUtility.ToJson(new PostSessionData() {
-          started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
-          ended_at = DateTime.Now.ToString() } )
-      ) ;
-      StartCoroutine( (Endpoints.Session as SessionPath).Put(3,rawData) ) ;
-    }
     public void OnClickDelete()
     {
-      StartCoroutine( (Endpoints.Session as SessionPath).Delete(3) ) ;
+      StartCoroutine( (Endpoints.Session as SessionPath).Delete( (Endpoints.Session as SessionPath).MySessionId ) ) ;
     }
 #endregion 
 

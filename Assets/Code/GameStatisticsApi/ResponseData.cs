@@ -63,14 +63,14 @@ namespace GameStatisticsApi.ResponseData
   }
 // PostSessionData
   [Serializable]
-  internal class PostSessionData
+  internal class PostOrPutSessionData
   {
     public string started_at ;
     public string ended_at ;
   }
 // PostSessionResponse
   [Serializable]
-  internal class PostSessionResponse : RequestResponse
+  internal class PostOrPutSessionResponse : RequestResponse
   {
     public int insert_id ;
     public ResponseContext<SessionContextKeys> context;
