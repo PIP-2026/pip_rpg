@@ -13,9 +13,6 @@ namespace GameStatisticsApi
   {
 #region Cache
     internal Dictionary<int,SessionRowData> Cache { get ; } = new () ;
-    /** TEST */
-    public int MySessionId = -1 ;
-    /** End */
 #endregion
 
 
@@ -63,7 +60,6 @@ namespace GameStatisticsApi
           PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
 
           Debug.Log( $"Inserted a new entry into session with an id of {res.insert_id}." ) ;
-          MySessionId = res.insert_id ; // TEST
         } )
       ) ;
     }
@@ -75,16 +71,6 @@ namespace GameStatisticsApi
     public override IEnumerator Put( int id, byte[] data )
     {
       yield return StartCoroutine( base.Put( id, data, (text) =>
-        {
-          PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
-
-          Debug.Log( $"Updated the session entry with the id of {res.insert_id}." ) ;
-        } )
-      ) ;
-    }
-    public IEnumerator Put( byte[] data ) // TEST
-    {
-      yield return StartCoroutine( base.Put( MySessionId, data, (text) =>
         {
           PostOrPutSessionResponse res = JsonUtility.FromJson<PostOrPutSessionResponse>(text) ;
 

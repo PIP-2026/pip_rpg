@@ -67,20 +67,7 @@ namespace GameStatisticsApi
           started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
           ended_at = DateTime.Now.ToString() } )
       ) ;
-      if( (Endpoints.Session as SessionPath).MySessionId == -1 )
-      {
-        StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) );
-      } else {
-        StartCoroutine( (Endpoints.Session as SessionPath).Put( rawData ) );
-      }
-    }
-    public void OnClickLoad()
-    {
-      StartCoroutine( (Endpoints.Session as SessionPath).Get() ) ;
-    }
-    public void OnClickDelete()
-    {
-      StartCoroutine( (Endpoints.Session as SessionPath).Delete( (Endpoints.Session as SessionPath).MySessionId ) ) ;
+      StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) ) ;
     }
 #endregion 
 
