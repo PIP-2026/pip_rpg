@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using GameStatisticsApi;
 using GameStatisticsApi.ResponseData;
 using UnityEngine;
@@ -29,6 +32,7 @@ public class SaveManager : MonoBehaviour
   private UserProfile _activeUserProfile ;
   private int _currentSessionId ;
 
+
 #region UnityEditor
   [SerializeField] private int _minsToAutoSave = 5 ;    // mins until 
 #endregion
@@ -45,40 +49,55 @@ public class SaveManager : MonoBehaviour
   }
 #endregion
 
-
+/// <summary>
+/// Called by the Save Button, Serializes the Data of the active User profile and passes it on to the API to request a response for Data storage, either updating or creating a new save file
+/// </summary>
 #region Save/Load
 public void SaveProfile()
   {
     string json = SerializeData() ;
-    WWWForm form = new() ;
-    form.AddField( "profileData" , json ) ;
-    int[] ids = new int[] { _activeUserProfile.UserId, _currentSessionId } ;
+    byte[] encryptedData = SaveSystem.Encrypt(json) ;
     if( _currentSessionId > 0 )
     {
-      StartCoroutine( RestApi.Session.Put( ids, form, (onResult) =>
+      StartCoroutine( RestApi.Endpoints.Session.Put( _activeUserProfile.UserId, encryptedData, (onResult) =>
       {
-        Debug.Log( $"{ids} :Existing file updated." ) ;
+        Debug.Log( $"{_activeUserProfile.UserId} :Existing file updated." ) ;
       })) ;
     }
     else
     {
-      StartCoroutine( RestApi.Session.Post( ids, form , (onResult) =>
+      StartCoroutine( RestApi.Endpoints.Session.Post( encryptedData , (onResult) =>
       {
-        Debug.Log( $"New save file under {ids} created" ) ;
+        Debug.Log( $"New save file under {_activeUserProfile.UserId} created" ) ;
       })) ;
     }
   }
 public void LoadProfile( int sessionId )
   {
-    StartCoroutine( RestApi.Session.Get( sessionId, (onResult) =>
+    StartCoroutine( RestApi.Endpoints.Session.Get( sessionId, (onResult) =>
     {
       if( !string.IsNullOrEmpty( onResult ) )
       {
+        byte[] cipherData = Convert.FromBase64String( onResult ) ;
+        string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
         _currentSessionId = sessionId ;
-        DeserializeData( onResult ) ;
+        DeserializeData( decryptedJson ) ;
         Debug.Log( $"Profile {sessionId} loaded and deserialized" ) ;
       }
     })) ;
+  }
+
+public void DeleteProfile( int sessionId )
+  {
+    StartCoroutine( RestApi.Endpoints.Session.Get( sessionId, (onResult) =>
+    {
+      if( !string.IsNullOrEmpty( onResult ) )
+      {
+        RestApi.Endpoints.Session.Delete( sessionId ) ;
+        Debug.Log( $"Profile {sessionId} has been deleted" ) ;
+      }
+    })) ;
+
   }
 private IEnumerator AutoSave()
   {
@@ -91,10 +110,46 @@ private IEnumerator AutoSave()
   }
 #endregion
 
-
+/// <summary>
+/// Copied from older project, probably needs some adjustments
+/// </summary>
 #region Encryption/Decryption
-private void EncryptData() { throw new NotImplementedException() ; }
-private void DecryptData() { throw new NotImplementedException() ; }
+  public static class SaveSystem
+  {
+    private static readonly byte[] Key = Encoding.UTF8.GetBytes( "0123456789abcdef" ) ;
+    private static readonly byte[] Iv = Encoding.UTF8.GetBytes( "abcdef0123456789" ) ;
+    public static byte[] Encrypt( string plainText )
+    {
+      if ( string.IsNullOrEmpty( plainText ))  throw new ArgumentNullException( nameof( plainText ) );
+
+      using Aes aes = Aes.Create();
+      aes.Key = Key;
+      aes.IV = Iv;
+      using MemoryStream memoryStream = new() ;
+      ICryptoTransform encryptor = aes.CreateEncryptor( aes.Key , aes.IV ) ;
+      using (CryptoStream cryptoStream = new( memoryStream , encryptor , CryptoStreamMode.Write ) )
+      using (StreamWriter writer = new( cryptoStream , Encoding.UTF8 ) )
+      {
+        writer.Write( plainText ) ;
+      }
+      return memoryStream.ToArray();
+    }
+
+    public static string Decrypt(byte[] cipherData)
+    {
+      if (cipherData == null || cipherData.Length == 0)
+          throw new ArgumentNullException(nameof(cipherData));
+
+      using Aes aes = Aes.Create();
+      aes.Key = Key;
+      aes.IV = Iv;
+      using MemoryStream memoryStream = new(cipherData);
+      using CryptoStream cryptoStream = new(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read);
+      using StreamReader reader = new(cryptoStream, Encoding.UTF8);
+      return reader.ReadToEnd();
+    }
+  }
+
 #endregion
 
 
