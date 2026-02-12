@@ -12,6 +12,7 @@ using System.Linq;
 using GameStatisticsApi.ResponseData;
 using UnityEditorInternal;
 using System.Text;
+using Unity.VisualScripting;
 
 namespace GameStatisticsApi 
 {
@@ -19,6 +20,9 @@ namespace GameStatisticsApi
   ///  <para>
   ///   Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
   ///  </para>
+  ///   <para>
+  ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
+  ///   </para>
   ///   <para>
   ///   Issue: <a href="https://github.com/PIP-2026/pip_rpg/issues/22">link to issue</a>
   ///  </para>
@@ -30,7 +34,7 @@ namespace GameStatisticsApi
   /// </remarks>
   /// <summary>
   ///   Basic API Class that can perform calls to the server.
-  ///   The class should be capable of deserializing making API calls to the the Basic Response Server and deserialize the dummy data produced.
+  ///   The class should be capable of making API calls to the the Basic Response Server and deserialize the dummy data produced.
   ///   The class should recognize HTTP error codes and handle them appropriately. In this case this means logging them.
   /// </summary>
   public partial class RestApi : MonoBehaviour
@@ -47,15 +51,14 @@ namespace GameStatisticsApi
     [Header("Endpoints")]
     [SerializeField] private ApiPath session ;
     [SerializeField] private ApiPath input ;
-    [SerializeField] private ApiPath interaction ;
     [SerializeField] private ApiPath time ;
 #endregion
 
 
 #region Static Properties
-    public static Endpoints Endpoints = new() ;
-    public static string Host => _instance.apiHost ;
-    public static string Port => _instance.apiPort ;
+    internal static Endpoints Endpoints = new() ;
+    internal static string Host => _instance.apiHost ;
+    internal static string Port => _instance.apiPort ;
 #endregion
 
 
@@ -72,6 +75,55 @@ namespace GameStatisticsApi
 #endregion 
 
 
+#region Actions: Session
+    public IEnumerator GetSessions(Action<(int,DateTime,DateTime,DateTime)[]> action)
+    {
+      yield return StartCoroutine( (Endpoints.Session as SessionPath).Get() ) ;
+      action?.Invoke( default ) ;
+    }
+    public IEnumerator GetSession(int sessionId,Action<(int,DateTime,DateTime,DateTime)> action)
+    {
+      yield return StartCoroutine( (Endpoints.Session as SessionPath).Get(sessionId) ) ;
+      action?.Invoke( default ) ;
+    }
+    public IEnumerator AddSession(DateTime started_at, DateTime ended_at, Action<int> action)
+    {
+      yield return StartCoroutine( (Endpoints.Session as SessionPath).Post(null /* datetime data */ ) ) ;
+      action?.Invoke( default ) ;
+    }
+    public IEnumerator UpdateSession(int sessionId, DateTime started_at, DateTime ended_at, Action<bool> action)
+    {
+      yield return StartCoroutine( (Endpoints.Session as SessionPath).Put(sessionId, null /* datetime data */ ) ) ;
+      action?.Invoke( default ) ;
+    }
+    public IEnumerator DeleteSession(int sessionId, Action<bool> action)
+    {
+      yield return StartCoroutine( (Endpoints.Session as SessionPath).Delete(sessionId) ) ;
+      action?.Invoke( default ) ;
+    }
+#endregion 
+
+
+#region Actions: Input
+    public void GetInput(int sessionId)
+    {
+      StartCoroutine( (Endpoints.Input as InputPath).Get(sessionId) ) ;
+    }
+    public void AddInput(DateTime started_at, DateTime ended_at)
+    {
+      StartCoroutine( (Endpoints.Input as InputPath).Post(null /* datetime data */ ) ) ;
+    }
+    public void UpdateInput(int sessionId, DateTime started_at, DateTime ended_at)
+    {
+      StartCoroutine( (Endpoints.Input as InputPath).Put(sessionId, null /* datetime data */ ) ) ;
+    }
+    public void DeleteInput(int sessionId)
+    {
+      StartCoroutine( (Endpoints.Input as InputPath).Delete(sessionId) ) ;
+    }
+#endregion 
+
+
 #region MonoBehavior
     private void Awake()
     {
@@ -82,18 +134,16 @@ namespace GameStatisticsApi
 
       Endpoints.Session     = _instance.session ;
       Endpoints.Input       = _instance.input ;
-      Endpoints.Interaction = _instance.interaction ;
       Endpoints.Time        = _instance.time ;
     }
 #endregion
   }
 
 #region Endpoints
-  public class Endpoints
+  internal class Endpoints
   {
     public ApiPath Session { get ; internal set ; }
     public ApiPath Input { get ; internal set ; }
-    public ApiPath Interaction { get ; internal set ; }
     public ApiPath Time { get ; internal set ; }
   }
 #endregion 

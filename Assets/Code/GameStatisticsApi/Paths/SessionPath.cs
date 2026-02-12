@@ -20,7 +20,9 @@ namespace GameStatisticsApi
     public override IEnumerator Get( int[] ids ) => throw new InvalidOperationException( "SessionPath GET does not handle more than one id." ) ;
     public override IEnumerator Get( int id )
     {
-      yield return StartCoroutine( base.Get( id, (text) => {
+      yield return StartCoroutine( base.Get( id,
+        Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{DateTime.Now}\" }}" ),
+        (text) => {
         GetSessionResponse res = JsonUtility.FromJson<GetSessionResponse>(text) ;
 
         int entriesAdded = 0 ;
