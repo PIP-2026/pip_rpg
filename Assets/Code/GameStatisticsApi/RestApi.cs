@@ -12,7 +12,6 @@ using System.Linq;
 using GameStatisticsApi.ResponseData;
 using UnityEditorInternal;
 using System.Text;
-using Unity.VisualScripting;
 
 namespace GameStatisticsApi 
 {
@@ -47,79 +46,186 @@ namespace GameStatisticsApi
 #region Unity Editor
     [SerializeField] private string apiHost = "127.0.0.1" ;
     [SerializeField] private string apiPort = "4141" ;
+    [SerializeField] private string apiRoot = "/statistics" ;
 
     [Header("Endpoints")]
-    [SerializeField] private ApiPath session ;
-    [SerializeField] private ApiPath input ;
-    [SerializeField] private ApiPath time ;
+    [SerializeField] private ApiEndpoint session ;
+    [SerializeField] private ApiEndpoint input ;
+    [SerializeField] private ApiEndpoint time ;
 #endregion
 
 
 #region Static Properties
-    internal static Endpoints Endpoints = new() ;
     internal static string Host => _instance.apiHost ;
     internal static string Port => _instance.apiPort ;
+    internal static string Root => _instance.apiRoot ;
 #endregion
 
 
-#region TEST
-    public void OnClickSave()
-    {
-      byte[] rawData = Encoding.UTF8.GetBytes(
-        JsonUtility.ToJson(new PostOrPutSessionData() {
-          started_at = (DateTime.Now - TimeSpan.FromSeconds(Time.realtimeSinceStartupAsDouble)).ToString(),
-          ended_at = DateTime.Now.ToString() } )
-      ) ;
-      StartCoroutine( (Endpoints.Session as SessionPath).Post( rawData ) ) ;
-    }
-#endregion 
-
-
 #region Actions: Session
-    public IEnumerator GetSessions(Action<(int,DateTime,DateTime,DateTime)[]> action)
+    public IEnumerator GetSessions(Action<(int,DateTime,DateTime,DateTime)[]> action, DateTime cache = default )
     {
-      yield return StartCoroutine( (Endpoints.Session as SessionPath).Get() ) ;
-      action?.Invoke( default ) ;
+      List<(int,DateTime,DateTime,DateTime)> values = new () ;
+
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.session.GetAll.Call(
+        data,
+        (text) => {
+          GetSessionResponse res = JsonUtility.FromJson<GetSessionResponse>(text) ;
+          foreach( SessionRowData data in res.data )
+          {
+            values.Add( (data.id, DateTime.Parse(data.started_at), DateTime.Parse(data.ended_at), DateTime.Parse(data.recorded_at)) ) ;
+          }
+        }
+      ) ) ;
+
+      action?.Invoke( values.ToArray() ) ;
     }
-    public IEnumerator GetSession(int sessionId,Action<(int,DateTime,DateTime,DateTime)> action)
+
+    public IEnumerator GetSession(int sessionId,Action<int,DateTime,DateTime,DateTime> action)
     {
-      yield return StartCoroutine( (Endpoints.Session as SessionPath).Get(sessionId) ) ;
-      action?.Invoke( default ) ;
+      yield return StartCoroutine( _instance.session.GetOne.Call(sessionId,
+        (text) =>
+        {
+          SessionRowData data = JsonUtility.FromJson<GetSessionResponse>(text).data[0] ;
+          action?.Invoke( data.id, DateTime.Parse(data.started_at), DateTime.Parse(data.ended_at), DateTime.Parse(data.recorded_at) ) ;
+        }
+      ) ) ;
     }
+
     public IEnumerator AddSession(DateTime started_at, DateTime ended_at, Action<int> action)
     {
-      yield return StartCoroutine( (Endpoints.Session as SessionPath).Post(null /* datetime data */ ) ) ;
-      action?.Invoke( default ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.session.Add.Call( data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).insert_id ) ; }
+      ) ) ;
     }
+
     public IEnumerator UpdateSession(int sessionId, DateTime started_at, DateTime ended_at, Action<bool> action)
     {
-      yield return StartCoroutine( (Endpoints.Session as SessionPath).Put(sessionId, null /* datetime data */ ) ) ;
-      action?.Invoke( default ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.session.Update.Call( sessionId, data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).ok ) ; }
+      ) ) ;
     }
+
     public IEnumerator DeleteSession(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( (Endpoints.Session as SessionPath).Delete(sessionId) ) ;
-      action?.Invoke( default ) ;
+      yield return StartCoroutine( _instance.session.Delete.Call( sessionId,
+        (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
+      ) ) ;
     }
 #endregion 
 
 
 #region Actions: Input
-    public void GetInput(int sessionId)
+    public IEnumerator GetInputs(Action<(int,int,int,int,DateTime)[]> action, DateTime cache = default )
     {
-      StartCoroutine( (Endpoints.Input as InputPath).Get(sessionId) ) ;
+      List<(int,int,int,int,DateTime)> values = new () ;
+
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.input.GetAll.Call(
+        data,
+        (text) => {
+          GetInputResponse res = JsonUtility.FromJson<GetInputResponse>(text) ;
+          foreach( InputRowData data in res.data )
+          {
+            values.Add( (data.session_id, data.times_buttons_clicked, data.distance_moved, data.etc, DateTime.Parse(data.recorded_at)) ) ;
+          }
+        }
+      ) ) ;
+
+      action?.Invoke( values.ToArray() ) ;
     }
-    public void AddInput(DateTime started_at, DateTime ended_at)
+
+    public IEnumerator GetInput(int sessionId, Action<int,int,int,int,DateTime> action, DateTime cache = default )
     {
-      StartCoroutine( (Endpoints.Input as InputPath).Post(null /* datetime data */ ) ) ;
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.input.GetOne.Call(
+        sessionId,
+        data,
+        (text) => {
+          InputRowData data = JsonUtility.FromJson<GetInputResponse>(text).data[0] ;
+          action?.Invoke( data.session_id, data.times_buttons_clicked, data.distance_moved, data.etc, DateTime.Parse(data.recorded_at) ) ;
+        }
+      ) ) ;
     }
-    public void UpdateInput(int sessionId, DateTime started_at, DateTime ended_at)
+
+    public IEnumerator AddInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<int> action)
     {
-      StartCoroutine( (Endpoints.Input as InputPath).Put(sessionId, null /* datetime data */ ) ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.input.Add.Call(sessionId, data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).insert_id ) ; }
+      ) ) ;
     }
-    public void DeleteInput(int sessionId)
+
+    public IEnumerator UpdateInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<bool> action)
     {
-      StartCoroutine( (Endpoints.Input as InputPath).Delete(sessionId) ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.input.Update.Call(sessionId, data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).ok ) ; }
+      ) ) ;
+    }
+
+    public IEnumerator DeleteInput(int sessionId, Action<bool> action)
+    {
+      yield return StartCoroutine( _instance.input.Delete.Call( sessionId,
+        (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
+      ) ) ;
+    }
+#endregion 
+
+
+#region Actions: Input
+    public IEnumerator GetTimes(int sessionId, Action<(int,TimeSpan,TimeSpan,TimeSpan,DateTime)[]> action)
+    {
+      //TODO
+      yield return StartCoroutine( _instance.time.GetAll.Call(sessionId) ) ;
+      action?.Invoke( default ) ;
+    }
+    public IEnumerator GetTime(int sessionId, Action<int,TimeSpan,TimeSpan,TimeSpan,DateTime> action)
+    {
+      //TODO
+      yield return StartCoroutine( _instance.time.GetOne.Call(sessionId) ) ;
+      action?.Invoke( default,default,default,default,default ) ;
+    }
+
+    public IEnumerator AddTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<int> action)
+    {
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).insert_id ) ; }
+      ) ) ;
+    }
+
+    public IEnumerator UpdateTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<bool> action)
+    {
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+        (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).ok ) ; }
+      ) ) ;
+    }
+
+    public IEnumerator DeleteTime(int sessionId, Action<bool> action)
+    {
+      yield return StartCoroutine( _instance.time.Delete.Call( sessionId,
+        (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
+      ) ) ;
     }
 #endregion 
 
@@ -131,21 +237,8 @@ namespace GameStatisticsApi
         throw new Exception("Program attempted to create an instance of RestApi, but one already existed.") ;
       
       _instance = this ;
-
-      Endpoints.Session     = _instance.session ;
-      Endpoints.Input       = _instance.input ;
-      Endpoints.Time        = _instance.time ;
     }
 #endregion
   }
-
-#region Endpoints
-  internal class Endpoints
-  {
-    public ApiPath Session { get ; internal set ; }
-    public ApiPath Input { get ; internal set ; }
-    public ApiPath Time { get ; internal set ; }
-  }
-#endregion 
 }
 

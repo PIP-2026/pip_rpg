@@ -75,13 +75,6 @@ namespace GameStatisticsApi.ResponseData
     public int insert_id ;
     public ResponseContext<SessionContextKeys> context;
   }
-// DeleteSessionResponse
-  [Serializable]
-  internal class DeleteSessionResponse : RequestResponse
-  {
-    public DeletionInfo[] deletions ;
-    public ResponseContext<SessionContextKeys> context;
-  }
 #endregion
 
 
@@ -91,8 +84,17 @@ namespace GameStatisticsApi.ResponseData
   internal class InputRowData
   {
     public int session_id ;
-
-    // TODO: add appropriate fields
+    public int times_buttons_clicked ;
+    public int distance_moved ;
+    public int etc ;
+    public string recorded_at ;
+  }
+// PostOrPutInputResponse
+  [Serializable]
+  internal class PostOrPutInputResponse : RequestResponse
+  {
+    public int insert_id ;
+    public ResponseContext<SessionContextKeys> context;
   }
   [Serializable]
   internal class GetInputResponse : RequestResponse
@@ -130,10 +132,27 @@ namespace GameStatisticsApi.ResponseData
 
     // TODO: add appropriate fields
   }
+// PostOrPutInputResponse
+  [Serializable]
+  internal class PostOrPutTimeResponse : RequestResponse
+  {
+    public int insert_id ;
+    public ResponseContext<SessionContextKeys> context;
+  }
   [Serializable]
   internal class GetTimeResponse : RequestResponse
   {
     public TimeRowData[] data;
+    public ResponseContext<SessionContextKeys> context;
+  }
+#endregion
+
+#region DeletionResponse
+// DeletionResponse
+  [Serializable]
+  internal class DeletionResponse : RequestResponse
+  {
+    public DeletionInfo[] deletions ;
     public ResponseContext<SessionContextKeys> context;
   }
 #endregion
