@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <remarks>
@@ -14,22 +15,23 @@ using UnityEngine;
 /// </remarks>
 /// <summary>
 ///   It contains the structs we deemed useful to be able to pass on
+///   A profile store the user Id it gets after initialization by requesting an id from the api
+///   The profile is stored locally and the statistics can be up and downloaded to and from the Database
 /// </summary>
 
 
 public class UserProfile
 {
   public int UserId ;
-  public int CurrentSessionId ;
   public string UserName ;
+  public UserProfileConfiguration config ;
+  public List<UserSaveData> userSaveDatas = new() ;
 
-  
 #region Serializable
   public struct UserProfileData
   {
-    public int userId ;   // Either clientId or SessionId to identify corresponding Database entry
-    public string userName ;    // Neat to know
-    public UserSaveStatistics statistics ;
+    public int UserId ;   // Either clientId or SessionId to identify corresponding Database entry
+    public string UserName ;    // Neat to know
     public UserProfileConfiguration config ;
     public UserSaveData SaveData ;
   }
@@ -69,10 +71,11 @@ public class UserProfile
   /// </summary>
   public struct UserSaveData
   {
+    public int SessionId ;
     public int PlayerPosition_x ;
     public int PlayerPosition_y ;
     public int ActiveSceneIndex ;
-
+    public UserSaveStatistics statistics ;
   }
 #endregion
 }
