@@ -34,7 +34,7 @@ public class SaveManager : MonoBehaviour
 
 
 #region UnityEditor
-  [SerializeField] private int _minsToAutoSave = 5 ;    // mins until 
+  [SerializeField] private int _minsToAutoSave = 5 ;    // mins until Auto Save is invoked
 #endregion
 
 
@@ -59,22 +59,23 @@ public void SaveProfile()
     byte[] encryptedData = SaveSystem.Encrypt(json) ;
     if( _currentSessionId > 0 )
     {
-      StartCoroutine( RestApi.Endpoints.Session.Put( _activeUserProfile.UserId, encryptedData, (onResult) =>
+      StartCoroutine( RestApi.UpdateSession( _activeUserProfile.UserId, encryptedData, (onResult) =>
       {
         Debug.Log( $"{_activeUserProfile.UserId} :Existing file updated." ) ;
       })) ;
     }
     else
     {
-      StartCoroutine( RestApi.Endpoints.Session.Post( encryptedData , (onResult) =>
+      StartCoroutine( RestApi.AddSession( encryptedData , (onResult) =>
       {
         Debug.Log( $"New save file under {_activeUserProfile.UserId} created" ) ;
       })) ;
     }
+    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
 public void LoadProfile( int sessionId )
   {
-    StartCoroutine( RestApi.Endpoints.Session.Get( sessionId, (onResult) =>
+    StartCoroutine( RestApi.GetSession( sessionId, (onResult) =>
     {
       if( !string.IsNullOrEmpty( onResult ) )
       {
@@ -85,6 +86,7 @@ public void LoadProfile( int sessionId )
         Debug.Log( $"Profile {sessionId} loaded and deserialized" ) ;
       }
     })) ;
+    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
 
 public void DeleteProfile( int sessionId )
@@ -93,12 +95,15 @@ public void DeleteProfile( int sessionId )
     {
       if( !string.IsNullOrEmpty( onResult ) )
       {
-        RestApi.Endpoints.Session.Delete( sessionId ) ;
+        RestApi.DeleteSession( sessionId ) ;
         Debug.Log( $"Profile {sessionId} has been deleted" ) ;
       }
     })) ;
-
+    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
+/// <summary>
+/// Automatically save the Profile, not implemented yet
+/// </summary>
 private IEnumerator AutoSave()
   {
     while (true)
