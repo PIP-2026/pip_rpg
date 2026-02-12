@@ -325,24 +325,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6689635548259235488, guid: 6a2b44ab1b050734d9bffc8a6e1babf4, type: 3}
-      propertyPath: endpointPath
-      value: /session
-      objectReference: {fileID: 0}
-    - target: {fileID: 7152466519367729470, guid: 6a2b44ab1b050734d9bffc8a6e1babf4, type: 3}
-      propertyPath: endpointPath
-      value: /session/{sessionId}/input
-      objectReference: {fileID: 0}
-    - target: {fileID: 8929942537784497568, guid: 6a2b44ab1b050734d9bffc8a6e1babf4, type: 3}
-      propertyPath: endpointPath
-      value: /session/{sessionId}/time
-      objectReference: {fileID: 0}
     - target: {fileID: 9167195249561662742, guid: 6a2b44ab1b050734d9bffc8a6e1babf4, type: 3}
       propertyPath: m_Name
       value: RestApi
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 3409700431158624375, guid: 6a2b44ab1b050734d9bffc8a6e1babf4, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
