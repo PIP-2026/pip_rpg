@@ -42,16 +42,16 @@ namespace GameStatisticsApi
     public virtual string BaseURI => $"http://{RestApi.Host}:{RestApi.Port}{endpointPath}" ;
 
 #region GET
-    public virtual IEnumerator Get( int[] ids, Action<string> onResult )
+    public virtual IEnumerator Get( int[] ids, byte[] data, Action<string> onResult )
     {
       StringBuilder uri = new (BaseURI) ;
 
       foreach( int id in ids ) { if(id == -1) break ; uri.Append('/') ; uri.Append(id) ; }
 
-      yield return StartCoroutine( GetRequest( uri.ToString(), onResult ) );
+      yield return StartCoroutine( MakeWebRequest( "GET", uri.ToString(), data, onResult ) );
     }
-    public virtual IEnumerator Get( int id, Action<string> onResult ) => Get( new[] {id}, onResult ) ;
-    public virtual IEnumerator Get( Action<string> onResult ) => Get( new[] {-1}, onResult ) ;
+    public virtual IEnumerator Get( int id, byte[] data, Action<string> onResult ) => Get( new[] {id}, data, onResult ) ;
+    public virtual IEnumerator Get( byte[] data, Action<string> onResult ) => Get( new[] {-1}, data, onResult ) ;
     
     /// <remarks>
     ///   <para>
@@ -75,7 +75,7 @@ namespace GameStatisticsApi
 
       foreach( int id in ids ) { if(id == -1) break ; uri.Append('/') ; uri.Append(id) ; }
       
-      yield return StartCoroutine( GetRequest( uri.ToString(), (s) => {} ) );
+      yield return StartCoroutine( MakeWebRequest( "GET", uri.ToString(), null, (s) => {} ) );
     }
     /// <remarks>
     ///   <para>
@@ -122,7 +122,7 @@ namespace GameStatisticsApi
 
       foreach( int id in ids ) { if(id == -1) break ; uri.Append('/') ; uri.Append(id) ; }
 
-      yield return StartCoroutine( PostRequest( uri.ToString(), data, onResult ) );
+      yield return StartCoroutine( MakeWebRequest( "POST", uri.ToString(), data, onResult ) );
     }
     public virtual IEnumerator Post( int[] ids, byte[] data ) => Post( ids, data, (s) => {} ) ;
     public virtual IEnumerator Post( int id, byte[] data, Action<string> onResult ) => Post( new[] {id}, data, onResult ) ;
@@ -139,7 +139,7 @@ namespace GameStatisticsApi
 
       foreach( int id in ids ) { if(id == -1) break ; uri.Append('/') ; uri.Append(id) ; }
 
-      yield return StartCoroutine( PutRequest( uri.ToString(), data, onResult ) );
+      yield return StartCoroutine( MakeWebRequest( "PUT", uri.ToString(), data, onResult ) );
     }
     public virtual IEnumerator Put( int[] ids, byte[] data) => Put( ids, data, (s) => {} ) ;
     public virtual IEnumerator Put( int id, byte[] data, Action<string> onResult ) => Put( new[] {id}, data, onResult) ;
@@ -154,7 +154,7 @@ namespace GameStatisticsApi
 
       foreach( int id in ids ) { if(id == -1) break ; uri.Append('/') ; uri.Append(id) ; }
 
-      yield return StartCoroutine( DeleteRequest( uri.ToString(), onResult ) );
+      yield return StartCoroutine( MakeWebRequest( "DELETE", uri.ToString(), null, onResult ) );
     }
     public virtual IEnumerator Delete( int[] ids) => Delete( ids, (s) => {} ) ;
     public virtual IEnumerator Delete( int id, Action<string> onResult ) => Delete( new[] {id}, onResult ) ;
@@ -162,7 +162,7 @@ namespace GameStatisticsApi
 #endregion
 
 
-#region GET Request
+#region Make Web Request
     /// <remarks>
     ///   <para>
     ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
@@ -184,13 +184,17 @@ namespace GameStatisticsApi
     /// <exception cref="Exception">Network related exceptions //
     /// TODO: find and handle exactly which network related exceptions
     /// </exception>
-    protected IEnumerator GetRequest( string uri, Action<string> onResult )
+    protected IEnumerator MakeWebRequest( string requestType, string uri, byte[] data, Action<string> onResult )
     {
-      debugMessages?.onGet.TryInvoke() ;
-      using ( UnityWebRequest webRequest = UnityWebRequest.Get( uri ) )
+      using ( UnityWebRequest webRequest = new UnityWebRequest(uri, requestType) )
       {
+        if( data != null)
+          webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(data) ;
+        webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer() ;
+        webRequest.SetRequestHeader("Content-Type", "application/json") ;
+
 #if UNITY_EDITOR
-        Debug.Log( $"Dispatching a GET request to \"{uri}\"." ) ;
+        Debug.Log( $"Dispatching a {requestType} request to \"{uri}\"." ) ;
 #endif
         yield return webRequest.SendWebRequest() ;
 
@@ -203,168 +207,6 @@ namespace GameStatisticsApi
         } else {
 #if UNITY_EDITOR
          Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
-#endif
-        }
-
-        onResult?.Invoke( webRequest.downloadHandler.text ) ;
-      }
-    }
-#endregion
-
-
-#region POST Request
-    /// <remarks>
-    ///   <para>
-    ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
-    ///   </para>
-    ///   <para>
-    ///     Only call this as a Unity Coroutine.<br/>
-    ///     All handled exceptions should be caught here and not further upstream. 
-    ///   </para>
-    /// </remarks>
-    /// <summary>
-    ///   Makes a POST request to the RestApi.
-    /// </summary>
-    /// <param name="uri">The identifier to which the request is be sent</param>
-    /// <param name="form">A WWWForm that contains the full post data</param>
-    /// <param name="onResult">
-    ///   The action which should be performed on the text body received by
-    ///   the UnityWebRequest's DownloadHandler.
-    /// </param>
-    /// <returns>Coroutine yield.</returns>
-    /// <exception cref="Exception">Network related exceptions //
-    /// TODO: find and handle exactly which network related exceptions
-    /// </exception>
-    protected IEnumerator PostRequest( string uri, byte[] data, Action<string> onResult )
-    {
-      debugMessages?.onPost.TryInvoke() ;
-      using (UnityWebRequest webRequest = new UnityWebRequest(uri, "POST") )
-      {
-        webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(data) ;
-        webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer() ;
-        webRequest.SetRequestHeader("Content-Type", "application/json") ;
-
-#if UNITY_EDITOR
-       Debug.Log( $"Dispatching a POST request to \"{uri}\"." ) ;
-#endif
-        yield return webRequest.SendWebRequest() ;
-
-        if( webRequest.result != UnityWebRequest.Result.Success )
-        {
-#if UNITY_EDITOR
-         Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
-#endif
-          yield break ;
-        } else {
-#if UNITY_EDITOR
-          Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
-#endif
-        }
-
-        onResult?.Invoke( webRequest.downloadHandler.text ) ;
-      }
-    }
-#endregion
-
-
-#region PUT Request
-    /// <remarks>
-    ///   <para>
-    ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
-    ///   </para>
-    ///   <para>
-    ///     Only call this as a Unity Coroutine.<br/>
-    ///     All handled exceptions should be caught here and not further upstream. 
-    ///   </para>
-    /// </remarks>
-    /// <summary>
-    ///   Makes a PUT request to the RestApi.
-    /// </summary>
-    /// <param name="uri">The identifier to which the request is be sent</param>
-    /// <param name="jsonData">A string containing json formatted data. Use JsonUtility.ToJson(data) on a Serializable object matching your request.</param>
-    /// <param name="onResult">
-    ///   The action which should be performed on the text body received by
-    ///   the UnityWebRequest's DownloadHandler.
-    /// </param>
-    /// <returns>Coroutine yield.</returns>
-    /// <exception cref="Exception">Network related exceptions //
-    /// TODO: find and handle exactly which network related exceptions
-    /// </exception>
-    protected IEnumerator PutRequest( string uri, byte[] data, Action<string> onResult )
-    {
-      debugMessages?.onPut.TryInvoke() ;
-      using (UnityWebRequest webRequest = new UnityWebRequest(uri, "PUT") )
-      {
-        webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(data) ;
-        webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer() ;
-        webRequest.SetRequestHeader("Content-Type", "application/json") ;
-
-#if UNITY_EDITOR
-        Debug.Log( $"Dispatching a PUT request to \"{uri}\"." ) ;
-#endif
-        yield return webRequest.SendWebRequest() ;
-
-        if( webRequest.result != UnityWebRequest.Result.Success )
-        {
-#if UNITY_EDITOR
-          Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
-#endif
-          yield break ;
-        } else {
-#if UNITY_EDITOR
-         Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
-#endif
-        }
-
-        onResult?.Invoke( webRequest.downloadHandler.text ) ;
-      }
-    }
-#endregion
-
-
-#region DELETE Request
-    /// <remarks>
-    ///   <para>
-    ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
-    ///   </para>
-    ///   <para>
-    ///     Only call this as a Unity Coroutine.<br/>
-    ///     All handled exceptions should be caught here and not further upstream. 
-    ///   </para>
-    /// </remarks>
-    /// <summary>
-    ///   Makes a DELETE request to the RestApi.
-    /// </summary>
-    /// <param name="uri">The identifier to which the request is be sent</param>
-    /// <param name="onResult">
-    ///   The action which should be performed on the text body received by
-    ///   the UnityWebRequest's DownloadHandler.
-    /// </param>
-    /// <returns>Coroutine yield.</returns>
-    /// <exception cref="Exception">Network related exceptions //
-    /// TODO: find and handle exactly which network related exceptions
-    /// </exception>
-    protected IEnumerator DeleteRequest( string uri, Action<string> onResult )
-    {
-      debugMessages?.onDelete.TryInvoke() ;
-      using (UnityWebRequest webRequest = UnityWebRequest.Delete( uri ) )
-      {
-#if UNITY_EDITOR
-        Debug.Log( $"Dispatching a DELETE request to \"{uri}\"." ) ;
-#endif
-        webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer() ;
-        
-        yield return webRequest.SendWebRequest() ;
-
-        if( webRequest.result != UnityWebRequest.Result.Success )
-        {
-#if UNITY_EDITOR
-        Debug.Log( $"Web request encountered an error: {webRequest.error}" ) ;
-#endif
-          yield break ;
-        } else {
-#if UNITY_EDITOR
-          Debug.Log( $"Received: {webRequest.downloadHandler.text}" ) ;
 #endif
         }
 
