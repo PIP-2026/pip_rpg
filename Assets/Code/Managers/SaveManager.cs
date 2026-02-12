@@ -84,7 +84,7 @@ public class SaveManager : MonoBehaviour
         data.SessionId = newId ;
         _activeUserProfile.UserSaveDatas[slotIndex] = data ;
 
-        SaveProfileLocal() ;
+        SaveProfileLocal(_activeSlotIndex) ;
         
       }));
     }
@@ -95,13 +95,13 @@ public class SaveManager : MonoBehaviour
 /// Called by the Save Button, Serializes the Data of the active User profile and passes it on to the API to request a response for Data storage, either updating or creating a new save file
 /// </summary>
 #region Save/Load
-  public void SaveProfileLocal()
+  public void SaveProfileLocal(int slotIndex)
   {
     _saveFilePath = Path.Combine(Application.persistentDataPath, _activeUserProfile.UserName + "_profile.dat");
 
     string json = SerializeData() ;
     byte[] encryptedData = SaveSystem.Encrypt(json) ;
-    File.WriteAllBytes(_saveFilePath, encryptedData);
+    File.WriteAllBytes(_saveFilePath, encryptedData) ;
 
     OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
@@ -119,30 +119,19 @@ public class SaveManager : MonoBehaviour
   }
   public void LoadProfile( int sessionId )
   {
-    StartCoroutine( RestApi.GetSession( sessionId, (onResult) =>
-    {
-      if( !string.IsNullOrEmpty( onResult ) )
-      {
         byte[] cipherData = Convert.FromBase64String( onResult ) ;
         string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
         _currentSessionId = sessionId ;
         DeserializeData( decryptedJson ) ;
         Debug.Log( $"Profile {sessionId} loaded and deserialized" ) ;
-      }
-    })) ;
+    
     OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
 
+//TODO Rewrite this Method
   public void DeleteProfile( int sessionId )
   {
-    StartCoroutine( RestApi.Endpoints.Session.Get( sessionId, (onResult) =>
-    {
-      if( !string.IsNullOrEmpty( onResult ) )
-      {
-        RestApi.DeleteSession( sessionId ) ;
-        Debug.Log( $"Profile {sessionId} has been deleted" ) ;
-      }
-    })) ;
+
     OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
 /// <summary>
@@ -153,7 +142,7 @@ public class SaveManager : MonoBehaviour
     while (true)
     {
       yield return new WaitForSecondsRealtime( _minsToAutoSave * 60 ) ;
-      SaveProfileLocal() ;
+      SaveProfileLocal(_activeSlotIndex) ;
       Debug.Log( $"AutoSave initiated." ) ;
     }
   }
@@ -200,9 +189,27 @@ public class SaveManager : MonoBehaviour
   }
 
 #endregion
+
+
 #region Synchronization
+  public void SyncStatistics()
+  {
+    if ( _activeSlotIndex >= 0 ) return ;
+    var activeData = _activeUserProfile.UserSaveDatas[_activeSlotIndex] ;
+    StartCoroutine( RestApi.UpdateSession(
+      activeData.SessionId,
+      activeData.statistics.TimeStartedAt,
+      DateTime.Now,
+      ( success ) =>
+      {
+        if ( success ) Debug.Log( "$Session {activeData.SessionId} stats successfully synced" ) ;
+        else Debug.Log( "Sync failed" ) ;
+      }
+    )) ;
+  }
 
 #endregion
+
 
 #region De-/Serialization
 private string SerializeData() { return JsonUtility.ToJson( _activeUserProfile ) ; }

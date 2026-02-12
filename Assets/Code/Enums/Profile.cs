@@ -24,16 +24,16 @@ public class UserProfile
 {
   public int UserId ;
   public string UserName ;
-  public UserProfileConfiguration config ;
-  public List<UserSaveData> userSaveDatas = new() ;
+  public UserProfileConfiguration Config ;
+  public List<UserSaveData> UserSaveDatas = new() ;
 
 #region Serializable
   public struct UserProfileData
   {
     public int UserId ;   // Either clientId or SessionId to identify corresponding Database entry
     public string UserName ;    // Neat to know
-    public UserProfileConfiguration config ;
-    public UserSaveData SaveData ;
+    public UserProfileConfiguration Config ;
+    public List<UserSaveData> UserSaveDatas ;
   }
 
   /// <summary>
@@ -53,8 +53,9 @@ public class UserProfile
   public struct UserSaveStatistics
   {
     // Time
-    public float TimeStartedAt ;
-    public float TimeEndedAt ;
+    public DateTime TimeStartedAt ;
+    public DateTime TimeEndedAt ;
+    public DateTime TimeLastCache ;
     public float TimeInMenu ;
     public float TimeInExploration ;
     public float TimeTotal ;
