@@ -85,8 +85,12 @@ namespace GameStatisticsApi
       action?.Invoke( values.ToArray() ) ;
     }
 
-    public IEnumerator GetSession(int sessionId,Action<int,DateTime,DateTime,DateTime> action)
+    public IEnumerator GetSession(int sessionId,Action<int,DateTime,DateTime,DateTime> action, DateTime cache = default )
     {
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
       yield return StartCoroutine( _instance.session.GetOne.Call(sessionId,
         (text) =>
         {
