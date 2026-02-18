@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Runtime.Serialization;
 using System;
 using System.Collections;
 using System.IO;
@@ -6,6 +8,7 @@ using System.Text;
 using GameStatisticsApi;
 using GameStatisticsApi.ResponseData;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 /// <remarks>
 ///   <para>
@@ -29,13 +32,16 @@ public class SaveManager : MonoBehaviour
 {
   private static SaveManager _instance ;
   private UserProfile _activeUserProfile ;
-  private int _currentSessionId ;
-  private const string FileName = "profile.dat";
-  private string  _saveFilePath;
   private int _activeSlotIndex = -1 ; // assume that now slot is currently loaded
+
+  // Directories
+  private const string RootFolderName = "UserProfiles" ;
+  private const string SavesFolderName = "SaveDatas" ;
+  private const string FilesFolderName = "SaveFiles" ;
+  private string UserProfilesPath => Path.Combine( Application.persistentDataPath , RootFolderName ) ;
 #region UnityEditor
   [SerializeField] private int _maxSaveSlots = 3 ; // assuming we run with up to three save slots
-
+  [SerializeField] private int _maxSaveFiles = 8; // Assuming up to 8 different SaveFiles for a given Slot
   [SerializeField] private int _minsToAutoSave = 5 ;    // mins until Auto Save is invoked
 #endregion
 
@@ -45,33 +51,47 @@ public class SaveManager : MonoBehaviour
   {
     if( _instance != null )
     {
-      throw new Exception( "Program tried to implement a nw instance of SaveManager, but one already existed" ) ;
+      throw new Exception( "Program tried to implement a new instance of SaveManager, but one already existed" ) ;
     }
     _instance = this;
-    _saveFilePath = Path.Combine(Application.persistentDataPath, FileName);
+    if ( !Directory.Exists( UserProfilesPath ) ) Directory.CreateDirectory( UserProfilesPath ) ;
     LoadUserProfile() ;
   }
-  private void LoadUserProfile()
+  private string GetProfilePath( string userName ) => Path.Combine( UserProfilesPath, userName ) ;
+  private string GetSlotPath( int slotIndex ) => Path.Combine( UserProfilesPath, _activeUserProfile.UserName, "SaveDatas" , $"Slot_{slotIndex}" ) ;
+  private string GetUserName()
   {
-    // Check if the user i already initialized in the system
-    if ( _activeUserProfile == null ) InitializeUser() ;
-    // If it is just load all the save data of the profile
-    // if it isn't, create a new user
-    // 
+    if( _activeUserProfile == null || string.IsNullOrEmpty( _activeUserProfile.UserName)) return "DefaultUser" ;
+    return _activeUserProfile.UserName ;
   }
-  public void InitializeUser()
+  public void InitializeUser( string inputName )
   {
-    _activeUserProfile = new UserProfile() ;
-    _activeUserProfile.UserName = "UserName" ;
-    for ( int i = 0 ; i < _maxSaveSlots ; i++)
+    string userName = string.IsNullOrEmpty( inputName ) ? "User_" + UnityEngine.Random.Range(100, 999) : inputName ;
+    string profilePath = Path.Combine( UserProfilesPath, userName ) ;
+    if( !Directory.Exists( profilePath ) ) Directory.CreateDirectory( profilePath ) ;
+    StartCoroutine( RestApi.AddSession( DateTime.Now, DateTime.Now, (newClientId) =>
     {
-      _activeUserProfile.UserSaveDatas.Add( new UserProfile.UserSaveData 
-      {
-        SessionId = -1,  // UninitializedSession
-        statistics = new UserProfile.UserSaveStatistics() 
-      }) ;
-    }
+      _activeUserProfile = new UserProfile() ;
+      _activeUserProfile.UserName = userName ;
+      _activeUserProfile.UserId = newClientId ;
+      for ( int i = 0 ; i < _maxSaveSlots ; i++ )
+      { InitializeSaveSlot(profilePath, i ) ; }
+     
+      SaveProfileData() ;
+      SaveProfileConfig() ;
+    })) ;      
   }
+  private void InitializeSaveSlot(string profilePath, int slotIndex)
+  {
+    _activeUserProfile.UserSaveDatas.Add( new UserProfile.UserSaveData 
+    {
+      SessionId = -1,  // UninitializedSession
+      statistics = new UserProfile.UserSaveStatistics() 
+    }) ;
+    Directory.CreateDirectory( Path.Combine( profilePath, "SaveDatas" , $"Slot_{slotIndex}" ) ) ;
+    Directory.CreateDirectory( Path.Combine( profilePath, "SaveDatas" , $"Slot_{slotIndex}" , "SaveFiles" ) ) ;
+  }
+
   public void InitializeActiveSave(int slotIndex)
   {
     if (slotIndex < 0 || slotIndex >= _activeUserProfile.UserSaveDatas.Count ) return ;
@@ -83,9 +103,6 @@ public class SaveManager : MonoBehaviour
         var data = _activeUserProfile.UserSaveDatas[slotIndex] ;
         data.SessionId = newId ;
         _activeUserProfile.UserSaveDatas[slotIndex] = data ;
-
-        SaveProfileLocal(_activeSlotIndex) ;
-        
       }));
     }
   }
@@ -94,60 +111,93 @@ public class SaveManager : MonoBehaviour
 /// <summary>
 /// Called by the Save Button, Serializes the Data of the active User profile and passes it on to the API to request a response for Data storage, either updating or creating a new save file
 /// </summary>
-#region Save/Load
-  public void SaveProfileLocal(int slotIndex)
+#region Save
+  public void SaveProfileData()
   {
-    _saveFilePath = Path.Combine(Application.persistentDataPath, _activeUserProfile.UserName + "_profile.dat");
-
-    string json = SerializeData() ;
+    string json = SerializeData( _activeUserProfile ) ;
     byte[] encryptedData = SaveSystem.Encrypt(json) ;
-    File.WriteAllBytes(_saveFilePath, encryptedData) ;
-
-    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
-  }
-  
-  public void SyncStatistics()
-  {
-    if ( _activeSlotIndex >= 0 ) return ;
-    var activeData = _activeUserProfile.UserSaveDatas[_activeSlotIndex] ;
-    StartCoroutine( RestApi.UpdateSession(
-      activeData.SessionId,
-      activeData.statistics.TimeStartedAt,
-      DateTime.Now,
-      ()
-    )) ;
-  }
-  public void LoadProfile( int sessionId )
-  {
-        byte[] cipherData = Convert.FromBase64String( onResult ) ;
-        string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
-        _currentSessionId = sessionId ;
-        DeserializeData( decryptedJson ) ;
-        Debug.Log( $"Profile {sessionId} loaded and deserialized" ) ;
+    string path = Path.Combine( GetProfilePath( _activeUserProfile.UserName ), "ProfileData.dat" ) ;
+    File.WriteAllBytes(path, encryptedData) ;
     
     OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
   }
-
-//TODO Rewrite this Method
-  public void DeleteProfile( int sessionId )
+  private void SaveProfileConfig()
   {
+    string json = SerializeData( _activeUserProfile.Config ) ;
+    byte[] encryptedData = SaveSystem.Encrypt( json ) ;
+    string path = Path.Combine( GetProfilePath( _activeUserProfile.UserName ), "ProfileConfig.dat" ) ;
+    File.WriteAllBytes( path, encryptedData ) ;
 
-    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+    OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
   }
-/// <summary>
-/// Automatically save the Profile, not implemented yet
-/// </summary>
+  private void SaveData()
+  {
+    string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex] ) ;
+    byte[] encryptedData = SaveSystem.Encrypt( json ) ;
+    string path = Path.Combine( GetSlotPath( _activeSlotIndex ), $"Save_{_activeSlotIndex}" ) ;
+    File.WriteAllBytes( path , encryptedData ) ;
+    OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
+  }
+  private void SaveDataStatistics( int sessionId )
+  {
+    if( _activeSlotIndex < 0 ) return ;
+    string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex].statistics ) ;
+    byte[] encryptedData = SaveSystem.Encrypt( json ) ;
+    string path = Path.Combine( GetSlotPath( _activeSlotIndex ) , "Statistics.dat" ) ;
+    File.WriteAllBytes( path , encryptedData ) ;
+  }
+  private void SaveUserDataFile()
+  {
+    throw new NotImplementedException();
+  }
+  
   private IEnumerator AutoSave()
   {
     while (true)
     {
       yield return new WaitForSecondsRealtime( _minsToAutoSave * 60 ) ;
-      SaveProfileLocal(_activeSlotIndex) ;
       Debug.Log( $"AutoSave initiated." ) ;
     }
   }
+
 #endregion
 
+
+#region Load
+  private void LoadUserProfile()
+  {
+    // Check if the user is already initialized in the system
+    if ( _activeUserProfile == null ) InitializeUser(null) ; // null for now until setup is implemented
+    // If it is just load all the save data of the profile
+    // if it isn't, create a new user
+    // 
+  }
+  public void LoadUserProfile( string profilePath )
+  {
+    GetProfilePath(profilePath) ;
+    if ( string.IsNullOrEmpty( profilePath ) ) GetProfilePath( _activeUserProfile.UserName ) ;
+    byte[] cipherData =  ;
+    string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
+    DeserializeData( decryptedJson ) ;
+   
+    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+  }
+
+//TODO Rewrite this Method
+/// <summary>
+/// Automatically save the Profile, not implemented yet
+/// </summary>
+#endregion
+
+
+#region Delete
+  public void DeleteProfile( int sessionId )
+  {
+
+    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+  }
+
+#endregion
 /// <summary>
 /// Copied from older project, probably needs some adjustments
 /// </summary>
@@ -212,7 +262,7 @@ public class SaveManager : MonoBehaviour
 
 
 #region De-/Serialization
-private string SerializeData() { return JsonUtility.ToJson( _activeUserProfile ) ; }
+private string SerializeData( object obj ) { return JsonUtility.ToJson( obj ) ; }
 private void DeserializeData( string jsonData ) { _activeUserProfile = JsonUtility.FromJson<UserProfile>( jsonData ) ; }
 #endregion
 }
