@@ -129,8 +129,10 @@ namespace GameStatisticsApi.ResponseData
   internal class TimeRowData
   {
     public int session_id ;
-
-    // TODO: add appropriate fields
+    public float in_menus ;
+    public float in_exploration ;
+    public float in_dialogue ;
+    public string recorded_at ;
   }
 // PostOrPutInputResponse
   [Serializable]
