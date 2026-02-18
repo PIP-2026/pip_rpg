@@ -1,5 +1,3 @@
-using System.Net.Security;
-using System.Runtime.Serialization;
 using System;
 using System.Collections;
 using System.IO;
@@ -8,8 +6,7 @@ using System.Text;
 using GameStatisticsApi;
 using GameStatisticsApi.ResponseData;
 using UnityEngine;
-using Unity.Collections.LowLevel.Unsafe;
-
+using System.Linq;
 /// <remarks>
 ///   <para>
 ///     Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
@@ -33,6 +30,7 @@ public class SaveManager : MonoBehaviour
   private static SaveManager _instance ;
   private UserProfile _activeUserProfile ;
   private int _activeSlotIndex = -1 ; // assume that now slot is currently loaded
+  private int _activeSlotDataIndex ;
 
   // Directories
   private const string RootFolderName = "UserProfiles" ;
@@ -55,7 +53,7 @@ public class SaveManager : MonoBehaviour
     }
     _instance = this;
     if ( !Directory.Exists( UserProfilesPath ) ) Directory.CreateDirectory( UserProfilesPath ) ;
-    LoadUserProfile() ;
+    LoadUserProfile( GetUserName() ) ;
   }
   private string GetProfilePath( string userName ) => Path.Combine( UserProfilesPath, userName ) ;
   private string GetSlotPath( int slotIndex ) => Path.Combine( UserProfilesPath, _activeUserProfile.UserName, "SaveDatas" , $"Slot_{slotIndex}" ) ;
@@ -142,13 +140,30 @@ public class SaveManager : MonoBehaviour
   {
     if( _activeSlotIndex < 0 ) return ;
     string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex].statistics ) ;
+    SyncStatistics() ;
     byte[] encryptedData = SaveSystem.Encrypt( json ) ;
     string path = Path.Combine( GetSlotPath( _activeSlotIndex ) , "Statistics.dat" ) ;
     File.WriteAllBytes( path , encryptedData ) ;
   }
-  private void SaveUserDataFile()
+  private void SaveUserDataFile( bool isAutoSave )
   {
-    throw new NotImplementedException();
+    if( _activeSlotIndex < 0 ) return ;
+    string filesDir = Path.Combine( GetSlotPath(_activeSlotIndex) , "SaveFiles" ) ;
+    if( !Directory.Exists(filesDir) ) Directory.CreateDirectory( filesDir ) ;
+    string prefix = isAutoSave ? "AutoSave_" : "ManualSave_" ;
+    var existingFiles = Directory.GetFiles( filesDir, prefix + "*.dat" )
+                                .OrderBy(f => File.GetCreationTime(f) )
+                                .ToList() ;
+    if( existingFiles.Count >= 8 )
+    {
+      File.Delete( existingFiles[0] ) ;
+    }
+    string fileName = $"{prefix}{DateTime.Now:yyyyMMdd_HHmmss}.dat" ;
+    string fullPath = Path.Combine( filesDir , fileName ) ;
+
+    string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex] ) ;
+    byte[] encryptedData = SaveSystem.Encrypt( json ) ;
+    File.WriteAllBytes( fullPath , encryptedData ) ;
   }
   
   private IEnumerator AutoSave()
@@ -164,19 +179,15 @@ public class SaveManager : MonoBehaviour
 
 
 #region Load
-  private void LoadUserProfile()
+  public void LoadUserProfile( string userName )
   {
-    // Check if the user is already initialized in the system
-    if ( _activeUserProfile == null ) InitializeUser(null) ; // null for now until setup is implemented
-    // If it is just load all the save data of the profile
-    // if it isn't, create a new user
-    // 
-  }
-  public void LoadUserProfile( string profilePath )
-  {
-    GetProfilePath(profilePath) ;
-    if ( string.IsNullOrEmpty( profilePath ) ) GetProfilePath( _activeUserProfile.UserName ) ;
-    byte[] cipherData =  ;
+    string targetUser = string.IsNullOrEmpty(userName) ? GetUserName() : userName ;
+    string path = Path.Combine( GetProfilePath( targetUser ) , "ProfileData.dat" ) ;
+    if ( !File.Exists(path ))
+    {
+      InitializeUser( userName ) ;
+    }
+    byte[] cipherData =  File.ReadAllBytes( path ) ;
     string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
     DeserializeData( decryptedJson ) ;
    
