@@ -19,10 +19,10 @@ namespace GameStatisticsApi
   ///  <para>
   ///   Author: Christof Kloninger / <a href="mailto:gme.24.kloninger@gmail.com">gme.24.kloninger@gmail.com</a>
   ///  </para>
-  ///   <para>
-  ///     Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
-  ///   </para>
-  ///   <para>
+  ///  <para>
+  ///    Author: Maria Wickes / <a href="mailto:maria.lindling@protonmail.com">maria.lindling@protonmail.com</a>
+  ///  </para>
+  ///  <para>
   ///   Issue: <a href="https://github.com/PIP-2026/pip_rpg/issues/22">link to issue</a>
   ///  </para>
   ///  <para>
@@ -190,17 +190,54 @@ namespace GameStatisticsApi
 
 
 #region Actions: Input
-    public IEnumerator GetTimes(int sessionId, Action<(int,TimeSpan,TimeSpan,TimeSpan,DateTime)[]> action)
+    public IEnumerator GetTimes(int sessionId, Action<(int,TimeSpan,TimeSpan,TimeSpan,DateTime)[]> action, DateTime cache = default )
     {
-      //TODO
-      yield return StartCoroutine( _instance.time.GetAll.Call(sessionId) ) ;
-      action?.Invoke( default ) ;
+      List<(int,TimeSpan,TimeSpan,TimeSpan,DateTime)> values = new () ;
+
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.time.GetAll.Call(
+        sessionId,
+        data,
+        (text) => {
+          GetTimeResponse res = JsonUtility.FromJson<GetTimeResponse>(text) ;
+          foreach( TimeRowData data in res.data )
+          {
+            values.Add( (
+              data.session_id,
+              TimeSpan.FromSeconds(data.in_menus),
+              TimeSpan.FromSeconds(data.in_exploration),
+              TimeSpan.FromSeconds(data.in_dialogue),
+              DateTime.Parse(data.recorded_at))
+            ) ;
+          }
+        }
+      ) ) ;
+      action?.Invoke( values.ToArray() ) ;
     }
-    public IEnumerator GetTime(int sessionId, Action<int,TimeSpan,TimeSpan,TimeSpan,DateTime> action)
+   
+    public IEnumerator GetTime(int sessionId, Action<int,TimeSpan,TimeSpan,TimeSpan,DateTime> action, DateTime cache = default )
     {
-      //TODO
-      yield return StartCoroutine( _instance.time.GetOne.Call(sessionId) ) ;
-      action?.Invoke( default,default,default,default,default ) ;
+      byte[] data = default ;
+      if( cache != default )
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+
+      yield return StartCoroutine( _instance.input.GetOne.Call(
+        sessionId,
+        data,
+        (text) => {
+          TimeRowData data = JsonUtility.FromJson<GetTimeResponse>(text).data[0] ;
+          action?.Invoke(
+            data.session_id,
+            TimeSpan.FromSeconds(data.in_menus),
+            TimeSpan.FromSeconds(data.in_exploration),
+            TimeSpan.FromSeconds(data.in_dialogue),
+            DateTime.Parse(data.recorded_at)
+          ) ;
+        }
+      ) ) ;
     }
 
     public IEnumerator AddTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<int> action)
