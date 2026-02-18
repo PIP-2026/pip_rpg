@@ -200,7 +200,7 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
     sql_params.push( request.body.ended_at ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
@@ -249,7 +249,7 @@ app.put( "/statistics/session/:id", asyncMiddleware( async (request,response,nex
     sql_params.push( request.body.ended_at ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
@@ -483,7 +483,7 @@ app.post( "/statistics/session/:session_id/input", asyncMiddleware( async (reque
     sql_params.push( request.body.etc ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
@@ -533,7 +533,7 @@ app.put( "/statistics/session/:session_id/input", asyncMiddleware( async (reques
     sql_params.push( request.body.etc ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
@@ -768,7 +768,7 @@ app.post( "/statistics/session/:session_id/time", asyncMiddleware( async (reques
     sql_params.push( request.body.in_dialogue ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
@@ -818,7 +818,7 @@ app.put( "/statistics/session/:session_id/time", asyncMiddleware( async (request
     sql_params.push( request.body.in_dialogue ) ;
   } else {
     responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
+    responseBody.error = `Invalid body.` ;
     response.status(400) ;
     response.json( responseBody ) ;
     return ;
