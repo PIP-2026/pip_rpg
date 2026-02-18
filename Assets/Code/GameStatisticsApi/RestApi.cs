@@ -271,6 +271,22 @@ namespace GameStatisticsApi
 #endregion 
 
 
+#region Test
+    public void OnClickSave()
+    {
+      StartCoroutine( AddSession( DateTime.Now - TimeSpan.FromSeconds(Time.timeSinceLevelLoadAsDouble), DateTime.Now, (i) => {} ) ) ;
+    }
+    public void OnClickLoad()
+    {
+      StartCoroutine( AddInput( -1, 0, 0, 0, (i) => {} ) ) ;
+    }
+    public void OnClickDelete()
+    {
+      StartCoroutine( AddTime( 5, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, (i) => {} ) ) ;
+    }
+#endregion 
+
+
 #region MonoBehavior
     private void Awake()
     {
