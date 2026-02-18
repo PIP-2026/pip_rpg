@@ -367,7 +367,7 @@ app.get( "/statistics/session/input", asyncMiddleware( async (request,response,n
   rows.forEach( row => {
     responseBody.data.push( {
       "session_id":           row[fields[0].name],
-      "times_buttons_clocked":row[fields[1].name],
+      "times_buttons_clicked":row[fields[1].name],
       "distance_moved":       row[fields[2].name],
       "etc":                  row[fields[3].name],
       "recorded_at":          row[fields[4].name],
@@ -428,7 +428,7 @@ app.get( "/statistics/session/:session_id/input", asyncMiddleware( async (reques
   
   responseBody.data = [ {
     "session_id":           rows[0][fields[0].name],
-    "times_buttons_clocked":rows[0][fields[1].name],
+    "times_buttons_clicked":rows[0][fields[1].name],
     "distance_moved":       rows[0][fields[2].name],
     "etc":                  rows[0][fields[3].name],
     "recorded_at":          rows[0][fields[4].name],
@@ -474,11 +474,11 @@ app.post( "/statistics/session/:session_id/input", asyncMiddleware( async (reque
   
 
   /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clocked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
+  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clicked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
     /**
      * TODO: ensure that the fields contain valid datetime data
      */
-    sql_params.push( request.body.times_buttons_clocked ) ;
+    sql_params.push( request.body.times_buttons_clicked ) ;
     sql_params.push( request.body.distance_moved ) ;
     sql_params.push( request.body.etc ) ;
   } else {
@@ -505,7 +505,7 @@ app.post( "/statistics/session/:session_id/input", asyncMiddleware( async (reque
 app.put( "/statistics/session/:session_id/input", asyncMiddleware( async (request,response,next) => {
   /******/
   let responseBody = responseBodyPUT ;
-  const sql = "UPDATE input SET times_buttons_clocked = ?, distance_moved = ?, etc = ? WHERE session_id = ?" ;
+  const sql = "UPDATE input SET times_buttons_clicked = ?, distance_moved = ?, etc = ? WHERE session_id = ?" ;
   let sql_params = [] ;
   /******/
 
@@ -524,11 +524,11 @@ app.put( "/statistics/session/:session_id/input", asyncMiddleware( async (reques
   
 
   /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clocked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
+  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clicked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
     /**
      * TODO: ensure that the fields contain valid datetime data
      */
-    sql_params.push( request.body.times_buttons_clocked ) ;
+    sql_params.push( request.body.times_buttons_clicked ) ;
     sql_params.push( request.body.distance_moved ) ;
     sql_params.push( request.body.etc ) ;
   } else {
