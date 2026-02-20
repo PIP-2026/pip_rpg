@@ -71,7 +71,7 @@ namespace GameStatisticsApi
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.GetAll.Call(
+      yield return _instance.StartCoroutine( _instance.session.GetAll.Call(
         data,
         (text) => {
           GetSessionResponse res = JsonUtility.FromJson<GetSessionResponse>(text) ;
@@ -104,7 +104,7 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.Add.Call( data,
+      yield return _instance.StartCoroutine( _instance.session.Add.Call( data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).insert_id ) ; }
       ) ) ;
     }
@@ -113,14 +113,14 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.Update.Call( sessionId, data,
+      yield return _instance.StartCoroutine( _instance.session.Update.Call( sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).ok ) ; }
       ) ) ;
     }
 
     public static IEnumerator DeleteSession(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.session.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.session.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }
@@ -136,7 +136,7 @@ namespace GameStatisticsApi
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.GetAll.Call(
+      yield return _instance.StartCoroutine( _instance.input.GetAll.Call(
         data,
         (text) => {
           GetInputResponse res = JsonUtility.FromJson<GetInputResponse>(text) ;
@@ -156,7 +156,7 @@ namespace GameStatisticsApi
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.GetOne.Call(
+      yield return _instance.StartCoroutine( _instance.input.GetOne.Call(
         sessionId,
         data,
         (text) => {
@@ -170,7 +170,7 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.Add.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.input.Add.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).insert_id ) ; }
       ) ) ;
     }
@@ -179,14 +179,14 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.input.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).ok ) ; }
       ) ) ;
     }
 
     public static IEnumerator DeleteInput(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.input.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.input.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }
@@ -247,7 +247,7 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.time.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).insert_id ) ; }
       ) ) ;
     }
@@ -256,14 +256,14 @@ namespace GameStatisticsApi
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.time.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).ok ) ; }
       ) ) ;
     }
 
     public static IEnumerator DeleteTime(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.time.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.time.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }

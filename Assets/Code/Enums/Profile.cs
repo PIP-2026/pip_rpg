@@ -19,64 +19,66 @@ using UnityEngine;
 ///   The profile is stored locally and the statistics can be up and downloaded to and from the Database
 /// </summary>
 
-
+[Serializable]
 public class UserProfile
 {
   public int UserId ;
   public string UserName ;
   public UserProfileConfiguration Config ;
   public List<UserSaveData> UserSaveDatas = new() ;
+}
+[Serializable]
+public class UserProfileData
+{
+  public int UserId ;   // Either clientId or SessionId to identify corresponding Database entry
+  public string UserName ; 
+  public UserProfileConfiguration Config ;
+  public List<UserSaveData> UserSaveDatas ;
+}
 
-#region Serializable
-  public struct UserProfileData
-  {
-    public int UserId ;   // Either clientId or SessionId to identify corresponding Database entry
-    public string UserName ;    // Neat to know
-    public UserProfileConfiguration Config ;
-    public List<UserSaveData> UserSaveDatas ;
-  }
+/// <summary>
+/// The Settings hold Interface information, e.g. Volume Settings
+/// </summary>
+[Serializable]
+public class UserProfileConfiguration
+{
+  public float MasterVolume;
+  public float MusicVolume;
+  public float SfxVolume;
+  public bool Muted;
+}
 
-  /// <summary>
-  /// The Settings hold Interface information, e.g. Volume Settings
-  /// </summary>
-  public struct UserProfileConfiguration
-  {
-    public float MasterVolume;
-    public float MusicVolume;
-    public float SfxVolume;
-    public bool Muted;
-  }
+/// <summary>
+///   DataPackage to transfer statistics between Application and Database
+/// </summary>
+[Serializable]
+public class UserSaveStatistics
+{
+  // Time
+  public DateTime TimeStartedAt ;
+  public DateTime TimeEndedAt ;
+  public DateTime TimeLastCache ;
+  public float TimeInMenu ;
+  public float TimeInExploration ;
+  public float TimeTotal ;
 
-  /// <summary>
-  ///   DataPackage to transfer statistics between Application and Database
-  /// </summary>
-  public struct UserSaveStatistics
-  {
-    // Time
-    public DateTime TimeStartedAt ;
-    public DateTime TimeEndedAt ;
-    public DateTime TimeLastCache ;
-    public float TimeInMenu ;
-    public float TimeInExploration ;
-    public float TimeTotal ;
-
-    // Actions
-    public int TilesMoved ;
-    public int ButtonsPressed ;
-    public int InteractionsInitiated ;
-    public int DialogueLinesSkipped ;
-  }
+  // Actions
+  public int TilesMoved ;
+  public int ButtonsPressed ;
+  public int InteractionsInitiated ;
+  public int DialogueLinesSkipped ;
+}
 
   /// <summary>
   ///   Is storing Application relevant information, to safely store/load current status in application, not statistics
   /// </summary>
-  public struct UserSaveData
-  {
-    public int SessionId ;
-    public int PlayerPosition_x ;
-    public int PlayerPosition_y ;
-    public int ActiveSceneIndex ;
-    public UserSaveStatistics statistics ;
-  }
-#endregion
+  
+[Serializable]
+public class UserSaveData
+{
+  public int SessionId ;
+  public int PlayerPosition_x ;
+  public int PlayerPosition_y ;
+  public int ActiveSceneIndex ;
+  public UserSaveStatistics statistics ;
 }
