@@ -59,12 +59,12 @@ public class SaveManager : MonoBehaviour
   /// With no input name given, the system will initialize a default user with a random number attached to it.
   /// </summary>
   /// <param name="inputName"></param>
-  public void InitializeUser( string inputName )
+  public IEnumerator InitializeUser( string inputName )
   {
     string userName = string.IsNullOrEmpty( inputName ) ? "User_" + UnityEngine.Random.Range(100, 999) : inputName ;
     string profilePath = Path.Combine( UserProfilesPath, userName ) ;
     if( !Directory.Exists( profilePath ) ) Directory.CreateDirectory( profilePath ) ;
-    StartCoroutine( RestApi.AddSession( DateTime.Now, DateTime.Now, (newClientId) =>
+    yield return StartCoroutine( RestApi.AddSession( DateTime.Now, DateTime.Now, (newClientId) =>
     {
       _activeUserProfile = new UserProfile() ;
       _activeUserProfile.UserName = userName ;
@@ -97,16 +97,17 @@ public class SaveManager : MonoBehaviour
 /// Here is when a session is actually connected to the Api for the purpose of tracking it.
 /// </summary>
 /// <param name="slotIndex"></param>
-  public void InitializeActiveSave(int slotIndex)
+  private IEnumerator InitializeActiveSave(int slotIndex)
   {
-    if (slotIndex < 0 || slotIndex >= _activeUserProfile.UserSaveDatas.Count ) return ;
     _activeSlotIndex = slotIndex ;
     var activeData = _activeUserProfile.UserSaveDatas[_activeSlotIndex] ;
     if (activeData.SessionId <= 0)
     {
-      StartCoroutine( RestApi.AddSession( DateTime.Now , DateTime.Now , (newId) => {
+      yield return StartCoroutine( RestApi.AddSession( DateTime.Now , DateTime.Now , (newId) => {
         var data = _activeUserProfile.UserSaveDatas[slotIndex] ;
         data.SessionId = newId ;
+        data.statistics.TimeStartedAt = DateTime.Now ;
+        data.statistics.TimeEndedAt = DateTime.Now ;
         _activeUserProfile.UserSaveDatas[slotIndex] = data ;
       }));
     }
@@ -169,9 +170,14 @@ public class SaveManager : MonoBehaviour
       Debug.Log($"Config saved") ;
     OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
   }
-  public void SaveData()
+  public void SaveData() => StartCoroutine(SaveDataCoroutine());
+  public IEnumerator SaveDataCoroutine()
   {
+    if( _activeUserProfile.UserSaveDatas[_activeSlotIndex].SessionId == -1)
+    yield return StartCoroutine(InitializeActiveSave(_activeSlotIndex));
     string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex] ) ;
+    SaveUserDataFile(false) ;
+    SaveDataStatistics() ;
     byte[] encryptedData = SaveSystem.Encrypt( json ) ;
     string path = Path.Combine( GetSlotPath( _activeSlotIndex ), $"Save_{_activeSlotIndex}" ) ;
     File.WriteAllBytes( path , encryptedData ) ;
@@ -182,7 +188,7 @@ public class SaveManager : MonoBehaviour
   {
     if( _activeSlotIndex < 0 ) return ;
     string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex].statistics ) ;
-    SyncStatistics_ToServer() ;
+    StartCoroutine(SyncStatistics_ToServer()) ;
     byte[] encryptedData = SaveSystem.Encrypt( json ) ;
     string path = Path.Combine( GetSlotPath( _activeSlotIndex ) , "Statistics.dat" ) ;
     File.WriteAllBytes( path , encryptedData ) ;
@@ -229,7 +235,7 @@ public class SaveManager : MonoBehaviour
     string path = Path.Combine( GetProfilePath( targetUser ) , "ProfileData.dat" ) ;
     if ( !File.Exists(path ))
     {
-      InitializeUser( userName ) ;
+      StartCoroutine(InitializeUser( userName ) );
       return ;
     } 
     byte[] cipherData =  File.ReadAllBytes( path ) ;
@@ -248,10 +254,9 @@ public class SaveManager : MonoBehaviour
     _activeUserProfile.Config = DeserializeData<UserProfileConfiguration>( decryptedJson ) ;
 
   }
-  public void LoadSlotData( int slotIndex )
+  public void LoadSlotData()
   {
-    _activeSlotIndex = slotIndex ;
-    string filesDir = Path.Combine( GetSlotPath( slotIndex ) , "SaveFiles" ) ;
+    string filesDir = Path.Combine( GetSlotPath( _activeSlotIndex ) , "SaveFiles" ) ;
     if ( !Directory.Exists( filesDir ) ) return ;
     // I consolidated this logic somewhere... i think
     var latestFile = Directory.GetFiles( filesDir, "*dat" )
@@ -261,13 +266,13 @@ public class SaveManager : MonoBehaviour
     {
       byte[] cipherData = File.ReadAllBytes( latestFile ) ;
       string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
-      _activeUserProfile.UserSaveDatas[slotIndex] = DeserializeData<UserSaveData>( decryptedJson ) ;
-      Debug.Log( $"Successfully loaded: { Path.GetFileName( latestFile ) } into Slot { slotIndex }" ) ;
+      _activeUserProfile.UserSaveDatas[_activeSlotIndex] = DeserializeData<UserSaveData>( decryptedJson ) ;
+      Debug.Log( $"Successfully loaded: { Path.GetFileName( latestFile ) } into Slot { _activeSlotIndex }" ) ;
 
       OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
     }
   }
-  private void LoadSaveData( int slotIndex , string fullPath )
+  public void LoadSaveData( int slotIndex , string fullPath )
   {
     if ( !File.Exists(fullPath) ) return ;
     _activeSlotIndex = slotIndex ;
@@ -286,6 +291,22 @@ public class SaveManager : MonoBehaviour
   {
 
     OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+  }
+  public void DeleteSlot() => StartCoroutine(DeleteSlotCoroutine()) ;
+  public IEnumerator DeleteSlotCoroutine()
+  {
+    if (!File.Exists(GetSlotPath(_activeSlotIndex))) yield return null;
+    string filesDir = Path.Combine( GetSlotPath( _activeSlotIndex ) , "SaveFiles" ) ;
+
+    yield return StartCoroutine( RestApi.DeleteSession(
+      _activeUserProfile.UserSaveDatas[_activeSlotIndex].SessionId, 
+      (success) =>
+      {
+        if(success) Debug.Log($"Session deleted") ;
+        else Debug.LogError("Lets leave this alone for now") ; 
+      })) ; 
+    File.Delete(GetSlotPath(_activeSlotIndex));
+    InitializeSaveSlot(GetProfilePath(_activeUserProfile.UserName) , _activeSlotIndex) ;
   }
   public void DeleteSaveData()
   {
@@ -336,11 +357,10 @@ public class SaveManager : MonoBehaviour
 
 
 #region Synchronization
-  public void SyncStatistics_ToServer()
+  public IEnumerator SyncStatistics_ToServer()
   {
-    if ( _activeSlotIndex < 0 ) return ;
     var activeData = _activeUserProfile.UserSaveDatas[_activeSlotIndex] ;
-    StartCoroutine( RestApi.UpdateSession(
+    yield return StartCoroutine( RestApi.UpdateSession(
       activeData.SessionId,
       activeData.statistics.TimeStartedAt,
       DateTime.Now,
