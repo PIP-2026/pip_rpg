@@ -149,6 +149,7 @@ public class SaveManager : MonoBehaviour
 /// Called by the Save Button, Serializes the Data of the active User profile and passes it on to the API to request a response for Data storage, either updating or creating a new save file
 /// </summary>
 #region Save
+//TODO Check the data validation to ensure the correspondence with Api is correctly established. Currently empty data is passed on.
   public void SaveProfileData()
   {
     string json = SerializeData( _activeUserProfile ) ;
