@@ -51,7 +51,7 @@ public class OurEventSystem : MonoBehaviour
     public static UnityEvent InteractionInitiated => _instance.statisticsTrackingEvents.anyInteract ; // Look into configs and wire this via inspector
     public static UnityEvent AnyButtonPressed => _instance.statisticsTrackingEvents.anyButtonPress ;  // Listeners wired via code
     public static UnityEvent<int> PlayerMoved => _instance.statisticsTrackingEvents.tilesMoved ;      // Listeners wired via code
-    public static UnityEvent<UserProfile> profileEdited => _instance.statisticsTrackingEvents.profileAction ;
+    public static UnityEvent<UserProfile> ProfileEdited => _instance.statisticsTrackingEvents.profileAction ;
   #endregion
   
 

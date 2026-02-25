@@ -27,14 +27,15 @@ using System.Collections.Generic;
 
 public class SaveManager : MonoBehaviour
 {
+#region Internal
   private static SaveManager _instance ;
   private UserProfile _activeUserProfile ;
+  public UserProfile ActiveUserProfile => _activeUserProfile ;
   private int _activeSlotIndex = -1 ; // assume that now slot is currently loaded
-
   // Directories
   private const string RootFolderName = "UserProfiles" ;
   private string UserProfilesPath => Path.Combine( Application.persistentDataPath , RootFolderName ) ;
-
+#endregion
 
 #region UnityEditor
 // These fields can be adjusted in the Editor to customize how many Files a user can store and 
@@ -99,23 +100,28 @@ public class SaveManager : MonoBehaviour
 /// <param name="slotIndex"></param>
   private IEnumerator InitializeActiveSave(int slotIndex)
   {
-    _activeSlotIndex = slotIndex ;
+    bool SessionExists = _activeUserProfile.UserSaveDatas.Any(d => d.SlotIndex == slotIndex && d.SessionId != -1);
+    if (SessionExists) yield break;
     var activeData = _activeUserProfile.UserSaveDatas[_activeSlotIndex] ;
     if (activeData.SessionId <= 0)
     {
       yield return StartCoroutine( RestApi.AddSession( DateTime.Now , DateTime.Now , (newId) => {
-        var data = _activeUserProfile.UserSaveDatas[slotIndex] ;
-        data.SessionId = newId ;
-        data.statistics.TimeStartedAt = DateTime.Now ;
-        data.statistics.TimeEndedAt = DateTime.Now ;
-        _activeUserProfile.UserSaveDatas[slotIndex] = data ;
+        UserSaveData data = new() {
+          SessionId = newId,
+          SlotIndex = slotIndex,
+          statistics = new(){
+            TimeStartedAt = DateTime.Now,
+            TimeEndedAt = DateTime.Now
+          }
+        };
+        _activeUserProfile.UserSaveDatas.Add(data) ;
       }));
     }
   }
   #endregion
 
 
-  #region HelperMethods
+#region HelperMethods
   private string GetProfilePath( string userName ) => Path.Combine( UserProfilesPath, userName ) ;
   private string GetSlotPath( int slotIndex ) => Path.Combine( UserProfilesPath, _activeUserProfile.UserName, "SaveDatas" , $"Slot_{slotIndex}" ) ;
   private string GetUserName()
@@ -140,7 +146,7 @@ public class SaveManager : MonoBehaviour
     _activeSlotIndex = slotIndex ;
     Debug.Log($"Active Slot{_activeSlotIndex} selected") ;
   }
-  public void SelectActiveSaveData()
+  public void SelectActiveSaveData( int slotIndex )
   {
     
   }
@@ -159,7 +165,7 @@ public class SaveManager : MonoBehaviour
     File.WriteAllBytes(path, encryptedData) ;
           Debug.Log($"Profile data saved") ;
 
-    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+    OurEventSystem.ProfileEdited.Invoke(_activeUserProfile) ;
   }
   public void SaveProfileConfig()
   {
@@ -168,21 +174,17 @@ public class SaveManager : MonoBehaviour
     string path = Path.Combine( GetProfilePath( _activeUserProfile.UserName ), "ProfileConfig.dat" ) ;
     File.WriteAllBytes( path, encryptedData ) ;
       Debug.Log($"Config saved") ;
-    OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
+    OurEventSystem.ProfileEdited.Invoke( _activeUserProfile ) ;
   }
   public void SaveData() => StartCoroutine(SaveDataCoroutine());
   public IEnumerator SaveDataCoroutine()
   {
-    if( _activeUserProfile.UserSaveDatas[_activeSlotIndex].SessionId == -1)
+    if(_activeUserProfile.UserSaveDatas.Count == 0 || _activeUserProfile.UserSaveDatas[_activeSlotIndex].SessionId == -1)
     yield return StartCoroutine(InitializeActiveSave(_activeSlotIndex));
-    string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex] ) ;
     SaveUserDataFile(false) ;
     SaveDataStatistics() ;
-    byte[] encryptedData = SaveSystem.Encrypt( json ) ;
-    string path = Path.Combine( GetSlotPath( _activeSlotIndex ), $"Save_{_activeSlotIndex}" ) ;
-    File.WriteAllBytes( path , encryptedData ) ;
-    Debug.Log($"Data saved to {_activeSlotIndex}");
-    OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
+    SaveProfileData();
+    OurEventSystem.ProfileEdited.Invoke( _activeUserProfile ) ;
   }
   public void SaveDataStatistics()
   {
@@ -194,7 +196,7 @@ public class SaveManager : MonoBehaviour
     File.WriteAllBytes( path , encryptedData ) ;
     Debug.Log($"Statistics saved to Slot: {_activeSlotIndex}");
   }
-  public void SaveUserDataFile( bool isAutoSave )
+  private void SaveUserDataFile( bool isAutoSave )
   {
     if( _activeSlotIndex < 0 ) return ;
     string filesDir = Path.Combine( GetSlotPath(_activeSlotIndex) , "SaveFiles" ) ;
@@ -206,11 +208,24 @@ public class SaveManager : MonoBehaviour
     if( existingFiles.Count >= _maxSaveFiles )
     {
       File.Delete( existingFiles[0] ) ;
+      Debug.Log($"Overwriting expensive Folder");
     }
     string fileName = $"{prefix}{DateTime.Now:yyyyMMdd_HHmmss}.dat" ;
     string fullPath = Path.Combine( filesDir , fileName ) ;
 
-    string json = SerializeData( _activeUserProfile.UserSaveDatas[_activeSlotIndex] ) ;
+    var data =  _activeUserProfile.UserSaveDatas[_activeSlotIndex];
+    UserSaveData newData = new()
+    {
+      SessionId = data.SessionId,
+      SlotIndex = _activeSlotIndex,
+      FileName = fileName,
+      statistics = data.statistics,
+
+      PlayerPosition_x = data.PlayerPosition_x,
+      PlayerPosition_y = data.PlayerPosition_y,
+    };
+    _activeUserProfile.UserSaveDatas.Add(newData) ;
+    string json = SerializeData( newData ) ;
     byte[] encryptedData = SaveSystem.Encrypt( json ) ;
     File.WriteAllBytes( fullPath , encryptedData ) ;
     Debug.Log($"File: {fileName} saved to {fullPath}");
@@ -232,17 +247,32 @@ public class SaveManager : MonoBehaviour
   public void LoadUserProfile( string userName )
   {
     string targetUser = string.IsNullOrEmpty(userName) ? GetUserName() : userName ;
+    string profileFolder = GetProfilePath(targetUser);
     string path = Path.Combine( GetProfilePath( targetUser ) , "ProfileData.dat" ) ;
-    if ( !File.Exists(path ))
+    if ( !Directory.Exists(profileFolder ))
     {
       StartCoroutine(InitializeUser( userName ) );
       return ;
-    } 
-    byte[] cipherData =  File.ReadAllBytes( path ) ;
-    string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
-    _activeUserProfile = DeserializeData<UserProfile>( decryptedJson ) ;
+    }
+    if (File.Exists(path))
+    {
+      byte[] cipherData =  File.ReadAllBytes( path ) ;
+      string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
+      _activeUserProfile = DeserializeData<UserProfile>( decryptedJson ) ;
+      _activeUserProfile.UserSaveDatas.Clear();
+    }
+    else _activeUserProfile = new(){ UserName = targetUser};
+    for (int i = 0; i < _maxSaveSlots; i++)
+    {
+      string filesDir = Path.Combine(GetSlotPath(i), "SaveFiles");
+      if (Directory.Exists(filesDir))
+      {
+        string[] files = Directory.GetFiles(filesDir, "*.dat");
+        foreach (string file in files) LoadSaveData(i, file);
+      }
+    }
     LoadProfileConfiguration( targetUser ) ;
-    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+    OurEventSystem.ProfileEdited.Invoke(_activeUserProfile) ;
   }
 
   private void LoadProfileConfiguration( string userName )
@@ -269,7 +299,7 @@ public class SaveManager : MonoBehaviour
       _activeUserProfile.UserSaveDatas[_activeSlotIndex] = DeserializeData<UserSaveData>( decryptedJson ) ;
       Debug.Log( $"Successfully loaded: { Path.GetFileName( latestFile ) } into Slot { _activeSlotIndex }" ) ;
 
-      OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
+      OurEventSystem.ProfileEdited.Invoke( _activeUserProfile ) ;
     }
   }
   public void LoadSaveData( int slotIndex , string fullPath )
@@ -278,9 +308,11 @@ public class SaveManager : MonoBehaviour
     _activeSlotIndex = slotIndex ;
     byte[] cipherData = File.ReadAllBytes( fullPath ) ;
     string decryptedJson = SaveSystem.Decrypt ( cipherData ) ;
-    _activeUserProfile.UserSaveDatas[slotIndex] = DeserializeData<UserSaveData>( decryptedJson ) ;
+    UserSaveData loadedData = DeserializeData<UserSaveData>( decryptedJson ) ;
+    loadedData.SlotIndex = slotIndex;
+    _activeUserProfile.UserSaveDatas.Add(loadedData);
     Debug.Log( $"Loaded save data: { Path.GetFileName( fullPath ) } into slot: { slotIndex } " ) ;
-    OurEventSystem.profileEdited.Invoke( _activeUserProfile ) ;
+    OurEventSystem.ProfileEdited.Invoke( _activeUserProfile ) ;
 
   }
 #endregion
@@ -290,7 +322,7 @@ public class SaveManager : MonoBehaviour
   public void DeleteProfile( string inputName )
   {
 
-    OurEventSystem.profileEdited.Invoke(_activeUserProfile) ;
+    OurEventSystem.ProfileEdited.Invoke(_activeUserProfile) ;
   }
   public void DeleteSlot() => StartCoroutine(DeleteSlotCoroutine()) ;
   public IEnumerator DeleteSlotCoroutine()
@@ -308,9 +340,10 @@ public class SaveManager : MonoBehaviour
     File.Delete(GetSlotPath(_activeSlotIndex));
     InitializeSaveSlot(GetProfilePath(_activeUserProfile.UserName) , _activeSlotIndex) ;
   }
-  public void DeleteSaveData()
+  public void DeleteSaveData() => StartCoroutine(DeleteSaveDataCoroutine());
+  private IEnumerator DeleteSaveDataCoroutine()
   {
-    
+    yield return null;
   }
 #endregion
 /// <summary>

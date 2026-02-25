@@ -76,6 +76,8 @@ public class UserSaveStatistics
 public class UserSaveData
 {
   public int SessionId ;
+  public int SlotIndex ;
+  public string FileName ;
   public int PlayerPosition_x ;
   public int PlayerPosition_y ;
   public int ActiveSceneIndex ;
