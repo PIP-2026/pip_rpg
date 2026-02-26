@@ -28,4 +28,8 @@ public class SaveDataButton : MonoBehaviour
       dateText.text = data.statistics.TimeStartedAt.ToString("dd/MM/yyyy HH/mm");
     }
   }
+  public void OnClick()
+  {
+    SaveManager.SelectedSaveData = this._saveData;
+  }
 }

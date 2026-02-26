@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <remarks>
 ///   <para>
@@ -51,12 +52,15 @@ public class UserProfileConfiguration
 ///   DataPackage to transfer statistics between Application and Database
 /// </summary>
 [Serializable]
-public class UserSaveStatistics
+public class UserSaveStatistics : ISerializationCallbackReceiver
 {
   // Time
-  public DateTime TimeStartedAt ;
-  public DateTime TimeEndedAt ;
-  public DateTime TimeLastCache ;
+  [NonSerialized] public DateTime TimeStartedAt;
+  [SerializeField] private string _startStr;
+  [NonSerialized] public DateTime TimeEndedAt ;
+  [SerializeField] private string _endStr;
+  [NonSerialized] public DateTime TimeLastCache ;
+  [SerializeField] private string _cacheStr;
   public float TimeInMenu ;
   public float TimeInExploration ;
   public float TimeTotal ;
@@ -66,6 +70,20 @@ public class UserSaveStatistics
   public int ButtonsPressed ;
   public int InteractionsInitiated ;
   public int DialogueLinesSkipped ;
+
+  public void OnAfterDeserialize()
+  {
+    DateTime.TryParse(_startStr, out TimeStartedAt);
+    DateTime.TryParse(_endStr, out TimeEndedAt);
+    DateTime.TryParse(_cacheStr, out TimeLastCache);
+  }
+
+  public void OnBeforeSerialize()
+  {
+    _startStr = TimeStartedAt.ToString("o");
+    _endStr = TimeEndedAt.ToString("o");
+    _cacheStr = TimeLastCache.ToString("o"); 
+  }
 }
 
   /// <summary>
@@ -81,5 +99,6 @@ public class UserSaveData
   public int PlayerPosition_x ;
   public int PlayerPosition_y ;
   public int ActiveSceneIndex ;
+
   public UserSaveStatistics statistics ;
 }
