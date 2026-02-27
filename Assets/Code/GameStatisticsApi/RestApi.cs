@@ -12,6 +12,7 @@ using System.Linq;
 using GameStatisticsApi.ResponseData;
 using UnityEditorInternal;
 using System.Text;
+using System.Globalization;
 
 namespace GameStatisticsApi 
 {
@@ -69,7 +70,7 @@ namespace GameStatisticsApi
 
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return _instance.StartCoroutine( _instance.session.GetAll.Call(
         data,
@@ -85,13 +86,13 @@ namespace GameStatisticsApi
       action?.Invoke( values.ToArray() ) ;
     }
 
-    public IEnumerator GetSession(int sessionId,Action<int,DateTime,DateTime,DateTime> action, DateTime cache = default )
+    public static IEnumerator GetSession(int sessionId,Action<int,DateTime,DateTime,DateTime> action, DateTime cache = default )
     {
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.GetOne.Call(sessionId,
+      yield return _instance.StartCoroutine( _instance.session.GetOne.Call(sessionId,
         (text) =>
         {
           SessionRowData data = JsonUtility.FromJson<GetSessionResponse>(text).data[0] ;
@@ -102,7 +103,7 @@ namespace GameStatisticsApi
 
     public static IEnumerator AddSession(DateTime started_at, DateTime ended_at, Action<int> action)
     {
-      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\", \"ended_at\": \"{ended_at.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return _instance.StartCoroutine( _instance.session.Add.Call( data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).insert_id ) ; }
@@ -111,7 +112,7 @@ namespace GameStatisticsApi
 
     public static IEnumerator UpdateSession(int sessionId, DateTime started_at, DateTime ended_at, Action<bool> action)
     {
-      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
+      byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\", \"ended_at\": \"{ended_at.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return _instance.StartCoroutine( _instance.session.Update.Call( sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).ok ) ; }
@@ -134,7 +135,7 @@ namespace GameStatisticsApi
 
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return _instance.StartCoroutine( _instance.input.GetAll.Call(
         data,
@@ -154,7 +155,7 @@ namespace GameStatisticsApi
     {
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return _instance.StartCoroutine( _instance.input.GetOne.Call(
         sessionId,
@@ -200,7 +201,7 @@ namespace GameStatisticsApi
 
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return StartCoroutine( _instance.time.GetAll.Call(
         sessionId,
@@ -225,7 +226,7 @@ namespace GameStatisticsApi
     {
       byte[] data = default ;
       if( cache != default )
-        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
+        data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\" }}" ) ;
 
       yield return StartCoroutine( _instance.input.GetOne.Call(
         sessionId,
