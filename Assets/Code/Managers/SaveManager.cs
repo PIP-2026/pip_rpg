@@ -219,6 +219,16 @@ public class SaveManager : MonoBehaviour
     _activeUserProfile.UserSaveDatas.Add(newData) ;
 
     string filesDir = Path.Combine( GetSlotPath(_activeSlotIndex) , "SaveFiles" ) ;
+    var garbageFiles = _activeUserProfile.UserSaveDatas
+      .Where(d=> d.SlotIndex == _activeSlotIndex && d.SessionId == -1)
+      .ToList();
+    foreach (var garbage in garbageFiles)
+    {
+      string gPath = Path.Combine(filesDir, garbage.FileName);
+      if (File.Exists(gPath)) File.Delete(gPath);
+      _activeUserProfile.UserSaveDatas.Remove(garbage);
+    }
+
     if( !Directory.Exists(filesDir) ) Directory.CreateDirectory( filesDir ) ;
     byte[] encryptedData = SaveSystem.Encrypt( SerializeData( newData ) ) ;
     File.WriteAllBytes( Path.Combine( filesDir , fileName ) , encryptedData ) ;
@@ -228,12 +238,10 @@ public class SaveManager : MonoBehaviour
       .OrderBy(d => d.statistics.TimeStartedAt)
       .ToList();
 
-    if( existingFiles.Count >= _maxSaveFiles )
+    if( existingFiles.Count > _maxSaveFiles )
     {
       var fileToDelete = existingFiles[0];
-      string pathToDelete = Path.Combine(filesDir, fileToDelete.FileName);
-      if(File.Exists(pathToDelete)) File.Delete( pathToDelete ) ;
-      _activeUserProfile.UserSaveDatas.Remove(fileToDelete);
+      DeleteSaveDataFile(fileToDelete);
       Debug.Log($"Overwriting expensive Folder");
     }
     Debug.Log($"File {fileName} saved. Slot {_activeSlotIndex} now has " + 
@@ -259,32 +267,19 @@ public class SaveManager : MonoBehaviour
   public void LoadUserProfile( string userName )
   {
     string targetUser = string.IsNullOrEmpty(userName) ? GetUserName() : userName ;
-    string profileFolder = GetProfilePath(targetUser);
     string path = Path.Combine( GetProfilePath( targetUser ) , "ProfileData.dat" ) ;
-    if ( !Directory.Exists(profileFolder ))
-    {
-      StartCoroutine(InitializeUser( userName ) );
-      return ;
-    }
     if (File.Exists(path))
     {
       byte[] cipherData =  File.ReadAllBytes( path ) ;
       string decryptedJson = SaveSystem.Decrypt( cipherData ) ;
       _activeUserProfile = DeserializeData<UserProfile>( decryptedJson ) ;
-      _activeUserProfile.UserSaveDatas.Clear();
-    }
-    else _activeUserProfile = new(){ UserName = targetUser};
-    for (int i = 0; i < _maxSaveSlots; i++)
-    {
-      InitializeSaveSlot(profileFolder, i);
-      string filesDir = Path.Combine(GetSlotPath(i), "SaveFiles");
-      if (Directory.Exists(filesDir))
+      LoadProfileConfiguration( targetUser ) ;
+      for (int i = 0; i < _maxSaveSlots; i++)
       {
-        string[] files = Directory.GetFiles(filesDir, "*.dat");
-        foreach (string file in files) LoadSaveData(i, file, false) ;
+        LoadSlotData(i);
       }
-    }
-    LoadProfileConfiguration( targetUser ) ;
+    } else StartCoroutine(InitializeUser( userName ) );
+
     OurEventSystem.ProfileEdited.Invoke(_activeUserProfile) ;
   }
 
@@ -297,15 +292,15 @@ public class SaveManager : MonoBehaviour
     _activeUserProfile.Config = DeserializeData<UserProfileConfiguration>( decryptedJson ) ;
 
   }
-  public void LoadSlotData()
+  public void LoadSlotData(int slotIndex)
   {
-    if(_activeSlotIndex < 0) return;
-    string filesDir = Path.Combine( GetSlotPath( _activeSlotIndex ) , "SaveFiles" ) ;
+    if (slotIndex < 0) slotIndex = _activeSlotIndex ;
+    string filesDir = Path.Combine( GetSlotPath( slotIndex ) , "SaveFiles" ) ;
     if ( !Directory.Exists( filesDir ) ) return ;
-    var latestFile = Directory.GetFiles( filesDir, "*dat" )
-                              .OrderByDescending( f => File.GetLastWriteTime(f) )
-                              .FirstOrDefault() ;
-    if ( latestFile != null ) LoadSaveData(_activeSlotIndex, Path.GetFileName(latestFile),true);
+    var allFiles = Directory.GetFiles( filesDir, "*dat" )
+      .OrderByDescending( f => File.GetLastWriteTime(f) )
+      .ToList() ;
+    foreach (string fullPath in allFiles) LoadSaveData(slotIndex, Path.GetFileName(fullPath), false);
   }
   public void LoadSelectedData() => LoadSaveData(SelectedSaveData.SlotIndex, SelectedSaveData.FileName, true);
   public void LoadSaveData(int slotIndex, string fileName, bool setAsActive)
