@@ -26,7 +26,7 @@ The repository containing the unity part of the project.
    4. Delete is affecting the entire slot, resetting that save slot for a new Session or the Session you are currently running
    5. Select the File button in Save/Load to view your Data, Save/Load/Delete specific Data Files within Slots
       
-## Feautures
+## Features
 + Stateless REST API
 + MonoBehaviour Based modular Api, Unity friendly
 + Local Datamanagement
