@@ -63,7 +63,7 @@ namespace GameStatisticsApi
 
 
 #region Actions: Session
-    public IEnumerator GetSessions(Action<(int,DateTime,DateTime,DateTime)[]> action, DateTime cache = default )
+    public static IEnumerator GetSessions(Action<(int,DateTime,DateTime,DateTime)[]> action, DateTime cache = default )
     {
       List<(int,DateTime,DateTime,DateTime)> values = new () ;
 
@@ -71,7 +71,7 @@ namespace GameStatisticsApi
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.GetAll.Call(
+      yield return _instance.StartCoroutine( _instance.session.GetAll.Call(
         data,
         (text) => {
           GetSessionResponse res = JsonUtility.FromJson<GetSessionResponse>(text) ;
@@ -100,27 +100,27 @@ namespace GameStatisticsApi
       ) ) ;
     }
 
-    public IEnumerator AddSession(DateTime started_at, DateTime ended_at, Action<int> action)
+    public static IEnumerator AddSession(DateTime started_at, DateTime ended_at, Action<int> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.Add.Call( data,
+      yield return _instance.StartCoroutine( _instance.session.Add.Call( data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).insert_id ) ; }
       ) ) ;
     }
 
-    public IEnumerator UpdateSession(int sessionId, DateTime started_at, DateTime ended_at, Action<bool> action)
+    public static IEnumerator UpdateSession(int sessionId, DateTime started_at, DateTime ended_at, Action<bool> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"started_at\": \"{started_at}\", \"ended_at\": \"{ended_at}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.session.Update.Call( sessionId, data,
+      yield return _instance.StartCoroutine( _instance.session.Update.Call( sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutSessionResponse>(text).ok ) ; }
       ) ) ;
     }
 
-    public IEnumerator DeleteSession(int sessionId, Action<bool> action)
+    public static IEnumerator DeleteSession(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.session.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.session.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }
@@ -128,7 +128,7 @@ namespace GameStatisticsApi
 
 
 #region Actions: Input
-    public IEnumerator GetInputs(Action<(int,int,int,int,DateTime)[]> action, DateTime cache = default )
+    public static IEnumerator GetInputs(Action<(int,int,int,int,DateTime)[]> action, DateTime cache = default )
     {
       List<(int,int,int,int,DateTime)> values = new () ;
 
@@ -136,7 +136,7 @@ namespace GameStatisticsApi
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.GetAll.Call(
+      yield return _instance.StartCoroutine( _instance.input.GetAll.Call(
         data,
         (text) => {
           GetInputResponse res = JsonUtility.FromJson<GetInputResponse>(text) ;
@@ -150,13 +150,13 @@ namespace GameStatisticsApi
       action?.Invoke( values.ToArray() ) ;
     }
 
-    public IEnumerator GetInput(int sessionId, Action<int,int,int,int,DateTime> action, DateTime cache = default )
+    public static IEnumerator GetInput(int sessionId, Action<int,int,int,int,DateTime> action, DateTime cache = default )
     {
       byte[] data = default ;
       if( cache != default )
         data = Encoding.UTF8.GetBytes( $"{{ \"cache\": \"{cache}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.GetOne.Call(
+      yield return _instance.StartCoroutine( _instance.input.GetOne.Call(
         sessionId,
         data,
         (text) => {
@@ -166,27 +166,27 @@ namespace GameStatisticsApi
       ) ) ;
     }
 
-    public IEnumerator AddInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<int> action)
+    public static IEnumerator AddInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<int> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.Add.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.input.Add.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).insert_id ) ; }
       ) ) ;
     }
 
-    public IEnumerator UpdateInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<bool> action)
+    public static IEnumerator UpdateInput(int sessionId, int times_buttons_clicked, int distance_moved, int etc, Action<bool> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"times_buttons_clicked\": \"{times_buttons_clicked}\", \"distance_moved\": \"{distance_moved}\", \"etc\": \"{etc}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.input.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.input.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutInputResponse>(text).ok ) ; }
       ) ) ;
     }
 
-    public IEnumerator DeleteInput(int sessionId, Action<bool> action)
+    public static IEnumerator DeleteInput(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.input.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.input.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }
@@ -221,7 +221,6 @@ namespace GameStatisticsApi
       ) ) ;
       action?.Invoke( values.ToArray() ) ;
     }
-   
     public IEnumerator GetTime(int sessionId, Action<int,TimeSpan,TimeSpan,TimeSpan,DateTime> action, DateTime cache = default )
     {
       byte[] data = default ;
@@ -244,27 +243,27 @@ namespace GameStatisticsApi
       ) ) ;
     }
 
-    public IEnumerator AddTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<int> action)
+    public static IEnumerator AddTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<int> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.time.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).insert_id ) ; }
       ) ) ;
     }
 
-    public IEnumerator UpdateTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<bool> action)
+    public static IEnumerator UpdateTime(int sessionId, TimeSpan in_menus, TimeSpan in_exploration, TimeSpan in_dialogue, Action<bool> action)
     {
       byte[] data = Encoding.UTF8.GetBytes( $"{{ \"in_menus\": \"{in_menus.TotalMilliseconds/1000}\", \"in_exploration\": \"{in_exploration.TotalMilliseconds/1000}\", \"in_dialogue\": \"{in_dialogue.TotalMilliseconds/1000}\" }}" ) ;
 
-      yield return StartCoroutine( _instance.time.Update.Call(sessionId, data,
+      yield return _instance.StartCoroutine( _instance.time.Update.Call(sessionId, data,
         (text) => { action?.Invoke( JsonUtility.FromJson<PostOrPutTimeResponse>(text).ok ) ; }
       ) ) ;
     }
 
-    public IEnumerator DeleteTime(int sessionId, Action<bool> action)
+    public static IEnumerator DeleteTime(int sessionId, Action<bool> action)
     {
-      yield return StartCoroutine( _instance.time.Delete.Call( sessionId,
+      yield return _instance.StartCoroutine( _instance.time.Delete.Call( sessionId,
         (text) => { action?.Invoke( JsonUtility.FromJson<DeletionResponse>(text).ok ) ; }
       ) ) ;
     }
