@@ -94,7 +94,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   requestType: 2
-  endpointPath: /session/input
+  endpointPath: /session/all/input
   debugMessage:
     isActive: 1
     message: Requesting all input statistics.
@@ -192,7 +192,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   requestType: 2
-  endpointPath: /session/time
+  endpointPath: /session/all/time
   debugMessage:
     isActive: 1
     message: Requesting all time statistics.
@@ -893,7 +893,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   requestType: 2
-  endpointPath: /session
+  endpointPath: /session/all
   debugMessage:
     isActive: 1
     message: Requesting all sessions.
