@@ -9,6 +9,7 @@ const LOCALPORT = 4141 ; // 80
 /****** BASIC SETUP ******/
 /*************************/
 import express from 'express';
+import { param, body, validationResult } from 'express-validator' ;
 import http from 'http' ;
 
 var app = express();
@@ -53,40 +54,34 @@ import { responseBodyDELETE } from './format/deletef.js';
 
 
 /*************************/
-/******* FUNCTIONS *******/
-/*************************/
-
-function ValidateIntegerParameter(request,paramName) {
-  return request.hasOwnProperty('params') && request.params.hasOwnProperty(paramName) && Number.isInteger( parseInt(request.params[paramName]) ) ;
-}
-
-
-/*************************/
 /******** SESSION ********/
 /*************************/
 
 
-app.get( "/statistics/session", asyncMiddleware( async (request,response,next) => {
-  /******/
-  let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM session ORDER BY id ASC" ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = sessionContext ;
+app.get( "/statistics/session/all",
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
   /** End */
 
 
-  /** Maintain Custody Chain */
-  if (response.hasOwnProperty('custody_chain')) {
-    responseBody.custody_chain = response.custody_chain ;
-  }
+  /** Create Body + Add Context + Maintain Custody Chain */
+  let responseBody = responseBodyGET ;
+  responseBody.context = sessionContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
 
 
   /** Query SQL Server */
+  const sql = "SELECT * FROM session ORDER BY id ASC" ;
   let [ rows, fields ] = await sql_connection.execute( sql ) ;
 
   if( rows.length == 0 )
@@ -112,42 +107,32 @@ app.get( "/statistics/session", asyncMiddleware( async (request,response,next) =
   response.json( responseBody ) ;
 } ) ) ;
 
-app.get( "/statistics/session/:id", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.get( "/statistics/session/:id",
+  param('id').notEmpty().isInt( { min:0 } ).toInt(),
+  body('cache').isISO8601().toDate().optional(),
+  body('custody_chain').notEmpty().isArray().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM session WHERE id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = sessionContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('id') && Number.isInteger( parseInt(request.params.id) ) ) {
-    sql_params.push( request.params.id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ rows, fields ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "SELECT * FROM session WHERE id = ?" ;
+  let [ rows, fields ] = await sql_connection.execute( sql, [ request.params.id ] ) ;
   /**
     * TODO: error handling
     * ERR: rows contains no elements
@@ -170,46 +155,32 @@ app.get( "/statistics/session/:id", asyncMiddleware( async (request,response,nex
   response.json( responseBody ) ;
 } ) ) ;
 
-app.post( "/statistics/session", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.post( "/statistics/session",
+  body('started_at').isISO8601().toDate(),
+  body('ended_at').isISO8601().toDate(),
+  body('custody_chain').isArray().notEmpty().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPOST ;
+  responseBody.context = sessionContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
+  responseBody.custody_chain.push( CUSTODIAN ) ;
+  /** End */
+
+
+  /** Query SQL Server */
   const sql = "INSERT INTO session (started_at,ended_at) VALUES (?,?)" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = sessionContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
-    responseBody.custody_chain = request.body.custody_chain ;
-  }
-  responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.started_at ) ;
-    sql_params.push( request.body.ended_at ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-
-
-  /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.body.started_at, request.body.ended_at ] ) ;
   /**
     * TODO: error handling
     */
@@ -219,59 +190,42 @@ app.post( "/statistics/session", asyncMiddleware( async (request,response,next) 
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/session/:id", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.put( "/statistics/session/:id",
+  param('id').notEmpty().isInt( { min:0 } ),
+  body('started_at').isISO8601().toDate(),
+  body('ended_at').isISO8601().toDate(),
+  body('cache').isISO8601().toDate().optional(),
+  body('custody_chain').isArray().notEmpty().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPUT ;
-  const sql = "UPDATE session SET started_at = ?, ended_at = ? WHERE id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = sessionContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
   
 
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('started_at') && request.body.hasOwnProperty('ended_at') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.started_at ) ;
-    sql_params.push( request.body.ended_at ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
+  /** Maintain Custody Chain */
+  if( Object.hasOwn(request, 'body') && Object.hasOwn(request.body, 'custody_chain') ) {
+    responseBody.custody_chain = request.body.custody_chain ;
   }
+  responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
-  
-
-  /** Validate Parameters */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('id') && Number.isInteger( parseInt(request.params.id) ) ) {
-    responseBody.insert_id = request.params.id ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End*/
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "UPDATE session SET started_at = ?, ended_at = ?, recorded_at = current_timestamp() WHERE id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.body.started_at, request.body.ended_at, request.params.id ] ) ;
   /**
     * TODO: error handling
     */
@@ -281,43 +235,32 @@ app.put( "/statistics/session/:id", asyncMiddleware( async (request,response,nex
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/session/:id", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.delete( "/statistics/session/:id",
+  param('id').notEmpty().isInt( { min:0 } ),
+  body('cache').isISO8601().toDate().optional(),
+  body('custody_chain').isArray().notEmpty().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyDELETE ;
-  const sql = "DELETE FROM session WHERE id = ?" ;
-  let sql_params = [] ;
-  responseBody.deletions = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = sessionContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('id') && Number.isInteger( parseInt(request.params.id) ) ) {
-    sql_params.push( request.params.id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "DELETE FROM session WHERE id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, request.params.id ) ;
   responseBody.deletions.push( { "location": "/statistics/session", "count": okPacket.affectedRows } ) ;
   /** End */
   
@@ -329,28 +272,31 @@ app.delete( "/statistics/session/:id", asyncMiddleware( async (request,response,
 /********* INPUT *********/
 /*************************/
 
-app.get( "/statistics/session/input", asyncMiddleware( async (request,response,next) => {
-  /******/
-  let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM input ORDER BY session_id ASC" ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = inputContext ;
+app.get( "/statistics/session/all/input",
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
   /** End */
 
 
-  /** Maintain Custody Chain */
-  if (response.hasOwnProperty('custody_chain')) {
-    responseBody.custody_chain = response.custody_chain ;
-  }
+  /** Create Body + Add Context + Maintain Custody Chain */
+  let responseBody = responseBodyGET ;
+  responseBody.context = inputContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
 
 
   /** Query SQL Server */
-  let [ rows, fields ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "SELECT * FROM input ORDER BY session_id ASC" ;
+  let [ rows, fields ] = await sql_connection.execute( sql ) ;
   /**
     * TODO: error handling
     * ERR: rows contains no elements
@@ -378,42 +324,32 @@ app.get( "/statistics/session/input", asyncMiddleware( async (request,response,n
   response.json( responseBody ) ;
 } ) ) ;
 
-app.get( "/statistics/session/:session_id/input", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.get( "/statistics/session/:session_id/input",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM input WHERE session_id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = sessionContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  responseBody.context = inputContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ rows, fields ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "SELECT * FROM input WHERE session_id = ?" ;
+  let [ rows, fields ] = await sql_connection.execute( sql, [ request.params.session_id ] ) ;
   /**
     * TODO: error handling
     * ERR: rows contains no elements
@@ -439,60 +375,35 @@ app.get( "/statistics/session/:session_id/input", asyncMiddleware( async (reques
   response.json( responseBody ) ;
 } ) ) ;
 
-app.post( "/statistics/session/:session_id/input", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.post( "/statistics/session/:session_id/input",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('times_buttons_clicked').notEmpty().isInt( { min:0 } ),
+  body('distance_moved').notEmpty().isInt( { min:0 } ),
+  body('etc').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPOST ;
+  responseBody.context = inputContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
+  responseBody.custody_chain.push( CUSTODIAN ) ;
+  /** End */
+
+
+  /** Query SQL Server */
   const sql = "INSERT INTO input (session_id,times_buttons_clicked,distance_moved,etc) VALUES (?,?,?,?)" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = inputContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
-    responseBody.custody_chain = request.body.custody_chain ;
-  }
-  responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-  
-
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clicked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.times_buttons_clicked ) ;
-    sql_params.push( request.body.distance_moved ) ;
-    sql_params.push( request.body.etc ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-
-
-  /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.params.id, request.body.times_buttons_clicked, request.body.distance_moved, request.body.etc ] ) ;
   /**
     * TODO: error handling
     */
@@ -502,60 +413,35 @@ app.post( "/statistics/session/:session_id/input", asyncMiddleware( async (reque
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/session/:session_id/input", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.put( "/statistics/session/:session_id/input",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('times_buttons_clicked').notEmpty().isInt( { min:0 } ),
+  body('distance_moved').notEmpty().isInt( { min:0 } ),
+  body('etc').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPUT ;
-  const sql = "UPDATE input SET times_buttons_clicked = ?, distance_moved = ?, etc = ? WHERE session_id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = inputContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('times_buttons_clicked') && request.body.hasOwnProperty('distance_moved') && request.body.hasOwnProperty('etc') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.times_buttons_clicked ) ;
-    sql_params.push( request.body.distance_moved ) ;
-    sql_params.push( request.body.etc ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "UPDATE input SET times_buttons_clicked = ?, distance_moved = ?, etc = ?, recorded_at = current_timestamp() WHERE session_id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.body.times_buttons_clicked, request.body.distance_moved, request.body.etc, request.params.session_id ] ) ;
   /**
     * TODO: error handling
     */
@@ -565,43 +451,33 @@ app.put( "/statistics/session/:session_id/input", asyncMiddleware( async (reques
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/session/:session_id/input", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.delete( "/statistics/session/:session_id/input",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyDELETE ;
-  const sql = "DELETE FROM input WHERE id = ?" ;
-  let sql_params = [] ;
   responseBody.deletions = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = inputContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "DELETE FROM input WHERE id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.params.session_id ] ) ;
   responseBody.deletions.push( { "location": "/statistics/session/input", "count": okPacket.affectedRows } ) ;
   /** End */
   
@@ -613,28 +489,31 @@ app.delete( "/statistics/session/:session_id/input", asyncMiddleware( async (req
 /********* TIME **********/
 /*************************/
 
-app.get( "/statistics/session/time", asyncMiddleware( async (request,response,next) => {
-  /******/
-  let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM time ORDER BY session_id ASC" ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = timeContext ;
+app.get( "/statistics/session/all/time",
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
   /** End */
 
 
-  /** Maintain Custody Chain */
-  if (response.hasOwnProperty('custody_chain')) {
-    responseBody.custody_chain = response.custody_chain ;
-  }
+  /** Create Body + Add Context + Maintain Custody Chain */
+  let responseBody = responseBodyGET ;
+  responseBody.context = timeContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
   responseBody.custody_chain.push( CUSTODIAN ) ;
   /** End */
 
 
   /** Query SQL Server */
-  let [ rows, fields ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "SELECT * FROM time ORDER BY session_id ASC" ;
+  let [ rows, fields ] = await sql_connection.execute( sql ) ;
   /**
     * TODO: error handling
     * ERR: rows contains no elements
@@ -663,42 +542,32 @@ app.get( "/statistics/session/time", asyncMiddleware( async (request,response,ne
   response.json( responseBody ) ;
 } ) ) ;
 
-app.get( "/statistics/session/:session_id/time", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.get( "/statistics/session/:session_id/time",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyGET ;
-  const sql = "SELECT * FROM time WHERE session_id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = timeContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( ValidateIntegerParameter(request,'session_id') ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ rows, fields ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "SELECT * FROM time WHERE session_id = ?" ;
+  let [ rows, fields ] = await sql_connection.execute( sql, [ request.params.session_id ] ) ;
   /**
     * TODO: error handling
     * ERR: rows contains no elements
@@ -724,60 +593,35 @@ app.get( "/statistics/session/:session_id/time", asyncMiddleware( async (request
   response.json( responseBody ) ;
 } ) ) ;
 
-app.post( "/statistics/session/:session_id/time", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.post( "/statistics/session/:session_id/time",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('in_menus').notEmpty().isFloat(),
+  body('in_exploration').notEmpty().isFloat(),
+  body('in_dialogue').notEmpty().isFloat(),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPOST ;
+  responseBody.context = timeContext ;
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
+    responseBody.custody_chain = request.body.custody_chain ;
+  responseBody.custody_chain.push( CUSTODIAN ) ;
+  /** End */
+
+
+  /** Query SQL Server */
   const sql = "INSERT INTO time (session_id,in_menus,in_exploration,in_dialogue) VALUES (?,?,?,?)" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
-  responseBody.context = timeContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
-    responseBody.custody_chain = request.body.custody_chain ;
-  }
-  responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-  
-
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('in_menus') && request.body.hasOwnProperty('in_exploration') && request.body.hasOwnProperty('in_dialogue') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.in_menus ) ;
-    sql_params.push( request.body.in_exploration ) ;
-    sql_params.push( request.body.in_dialogue ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-
-
-  /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.params.session_id, request.body.in_menus, request.body.in_exploration, request.body.in_dialogue ] ) ;
   /**
     * TODO: error handling
     */
@@ -787,60 +631,35 @@ app.post( "/statistics/session/:session_id/time", asyncMiddleware( async (reques
   response.json( responseBody ) ;
 } ) ) ;
 
-app.put( "/statistics/session/:session_id/time", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.put( "/statistics/session/:session_id/time",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('in_menus').notEmpty().isFloat(),
+  body('in_exploration').notEmpty().isFloat(),
+  body('in_dialogue').notEmpty().isFloat(),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyPUT ;
-  const sql = "UPDATE time SET in_menus = ?, in_exploration = ?, in_dialogue = ? WHERE session_id = ?" ;
-  let sql_params = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = timeContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Data */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('in_menus') && request.body.hasOwnProperty('in_exploration') && request.body.hasOwnProperty('in_dialogue') ) {
-    /**
-     * TODO: ensure that the fields contain valid datetime data
-     */
-    sql_params.push( request.body.in_menus ) ;
-    sql_params.push( request.body.in_exploration ) ;
-    sql_params.push( request.body.in_dialogue ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid body.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "UPDATE time SET in_menus = ?, in_exploration = ?, in_dialogue = ?, recorded_at = current_timestamp() WHERE session_id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.body.in_menus, request.body.in_exploration, request.body.in_dialogue, request.params.session_id ] ) ;
   /**
     * TODO: error handling
     */
@@ -850,43 +669,33 @@ app.put( "/statistics/session/:session_id/time", asyncMiddleware( async (request
   response.json( responseBody ) ;
 } ) ) ;
 
-app.delete( "/statistics/session/:session_id/time", asyncMiddleware( async (request,response,next) => {
-  /******/
+app.delete( "/statistics/session/:session_id/time",
+  param('session_id').notEmpty().isInt( { min:0 } ),
+  body('custody_chain').notEmpty().isArray().optional(),
+  body('cache').isISO8601().toDate().optional(),
+  asyncMiddleware( async (request,response,next) => {
+  /** Query Validation */
+  const result = validationResult(request) ;
+  if ( ! result.isEmpty() )
+  {
+    return response.send( { errors: result.array() } ) ;
+  }
+  /** End */
+
+
+  /** Create Body + Add Context + Maintain Custody Chain */
   let responseBody = responseBodyDELETE ;
-  const sql = "DELETE FROM time WHERE id = ?" ;
-  let sql_params = [] ;
   responseBody.deletions = [] ;
-  /******/
-
-
-  /** Add Context */
   responseBody.context = timeContext ;
-  /** End */
-  
-
-  /** Maintain Custody Chain */
-  if( request.hasOwnProperty('body') && request.body.hasOwnProperty('custody_chain') ) {
+  if( Object.hasOwn( request.body, 'custody_chain' ) )
     responseBody.custody_chain = request.body.custody_chain ;
-  }
   responseBody.custody_chain.push( CUSTODIAN ) ;
-  /** End */
-  
-
-  /** Validate Parameter */
-  if( request.hasOwnProperty('params') && request.params.hasOwnProperty('session_id') && Number.isInteger( parseInt(request.params.session_id) ) ) {
-    sql_params.push( request.params.session_id ) ;
-  } else {
-    responseBody.ok = false ;
-    responseBody.error = `Invalid parameter.` ;
-    response.status(400) ;
-    response.json( responseBody ) ;
-    return ;
-  }
   /** End */
 
 
   /** Query SQL Server */
-  let [ okPacket, _ ] = await sql_connection.execute( sql, sql_params ) ;
+  const sql = "DELETE FROM time WHERE id = ?" ;
+  let [ okPacket, _ ] = await sql_connection.execute( sql, [ request.params.session_id ] ) ;
   responseBody.deletions.push( { "location": "/statistics/session/time", "count": okPacket.affectedRows } ) ;
   /** End */
   
