@@ -140,8 +140,8 @@ public class SaveManager : MonoBehaviour
     string filesDir = Path.Combine( GetSlotPath( slotIndex ) , "SaveFiles" ) ;
     if (!Directory.Exists( filesDir) ) return new List<string>() ;
     return Directory.GetFiles( filesDir, "*.dat" )
-                    .OrderByDescending( f => File.GetLastWriteTime( f ) )
-                    .ToList() ;
+      .OrderByDescending( f => File.GetLastWriteTime( f ) )
+      .ToList() ;
   }
   public void SelectActiveProfile( string userName )
   {
